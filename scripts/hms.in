@@ -1,0 +1,26 @@
+#!@GUILE@ \
+--no-auto-compile -e main -s
+!#
+
+;;; Guile HMS --- HMS command-line interface.
+;;; Copyright © 2018 Oleg Pykhalov <go.wigust@gmail.com>
+;;;
+;;; This file is part of Guile HMS.
+;;;
+;;; Guile HMS is free software; you can redistribute it and/or modify
+;;; it under the terms of the GNU General Public License as published
+;;; by the Free Software Foundation; either version 3 of the License,
+;;; or (at your option) any later version.
+;;;
+;;; Guile HMS is distributed in the hope that it will be useful, but
+;;; WITHOUT ANY WARRANTY; without even the implied warranty of
+;;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;;; GNU General Public License for more details.
+;;;
+;;; You should have received a copy of the GNU General Public License
+;;; along with Guile HMS.  If not, see <http://www.gnu.org/licenses/>.
+
+(define* (main #:optional (args (command-line)))
+  (let ((hms-main (module-ref (resolve-interface '(hms ui))
+                              'hms-main)))
+    (exit (apply hms-main args))))
