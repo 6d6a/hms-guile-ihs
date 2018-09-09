@@ -20,6 +20,7 @@
   #:use-module ((guix scripts) #:select (parse-command-line))
   #:use-module ((guix ui) #:select (G_ leave))
   #:use-module (hms scripts)
+  #:use-module (hms scripts search)
   #:use-module (hms ui)
   #:use-module (json)
   #:use-module (rnrs bytevectors)
@@ -29,7 +30,8 @@
   #:use-module (srfi srfi-37)
   #:use-module (web client)
   #:export (account->scm
-            hms-account))
+            hms-account
+            serialize-account))
 
 (define (show-help)
   (display (G_ "Usage: hms account [OPTION ...] ACTION [ARG ...]
@@ -75,7 +77,7 @@ Fetch data about user.\n"))
       (alist-cons 'argument arg result)
       (let ((action (string->symbol arg)))
         (case action
-          ((domain service show unix website)
+          ((domain search service show unix website)
            (alist-cons 'action action result))
           (else (leave (G_ "~a: unknown action~%") action))))))
 
@@ -92,6 +94,12 @@ Fetch data about user.\n"))
 
 (define (account->scm account)
   (hash-table->alist (json-string->scm (fetch-account account))))
+
+(define (serialize-account account)
+    (if (string-prefix? "ac" account)
+        (string-take-right account (- (string-length account)
+                                      (string-length "ac_")))
+        account))
 
 (define (process-command command args opts)
   "Process COMMAND, one of the 'hms server' sub-commands.  ARGS is its
@@ -122,6 +130,12 @@ argument list and OPTS is the option alist."
                             (map hash-table->alist (json-string->scm (utf8->string body))))))
               args))
 
+  (define (serialize-search-user-args procedure)
+    (for-each (lambda (account)
+                (for-each procedure
+                          (assoc-ref (search-account account) "content")))
+              args))
+
   (case command
     ((show)
      (serialize-args
@@ -136,6 +150,13 @@ argument list and OPTS is the option alist."
                 (serialize-boolean (assoc-ref user "notifyDays")))
         (format #t "credit: ~a~%"
                 (serialize-boolean (assoc-ref user "credit")))
+        (newline))))
+
+    ((search)
+     (serialize-search-user-args
+      (lambda (account)
+        (format #t "created: ~a~%" (assoc-ref account "created"))
+        (format #t "id: ~a~%" (assoc-ref account "clientId"))
         (newline))))
 
     ((service)
@@ -218,12 +239,6 @@ argument list and OPTS is the option alist."
                   (assoc-ref user "domains")))))))
 
 (define (hms-account . args)
-  (define (serialize-account account)
-    (if (string-prefix? "ac" account)
-        (string-take-right account (- (string-length account)
-                                      (string-length "ac_")))
-        account))
-
   ;; TODO: with-error-handling
   (let* ((opts (parse-command-line args %options
                                    (list %default-options)
