@@ -23,7 +23,7 @@
   #:use-module (ice-9 match)
   #:use-module (srfi srfi-64))
 
-(define test-foo-json "[
+(define test-website-json "[
   {
     \"@type\": \"WebSite\",
     \"id\": \"5ac4a2f137c47a00072b9350\",
@@ -310,13 +310,75 @@
   }
 ]")
 
+(define test-account-json "{
+  \"id\": \"208112\",
+  \"version\": 100,
+  \"accountId\": \"208112\",
+  \"clientId\": \"208112\",
+  \"planId\": \"59074671719fca0bb6bd2f95\",
+  \"name\": \"AC_208112\",
+  \"active\": false,
+  \"created\": \"2018-04-04 11:55:29\",
+  \"deactivated\": \"2018-09-09 04:42:55\",
+  \"deleted\": null,
+  \"accountType\": \"VIRTUAL_HOSTING\",
+  \"notifications\": [
+    \"EMAIL_NEWS\"
+  ],
+  \"settings\": {
+    \"CREDIT_PERIOD\": \"P14D\",
+    \"NEW_ACCOUNT\": \"false\",
+    \"CREDIT\": \"false\"
+  },
+  \"services\": [
+    {
+      \"id\": \"5ad7ca67848f9e0007f252b9\",
+      \"personalAccountId\": \"208112\",
+      \"personalAccountName\": null,
+      \"serviceId\": \"59074666719fca0bb6bd2e24\",
+      \"quantity\": 1,
+      \"enabled\": true,
+      \"comment\": \"\",
+      \"paymentService\": {
+        \"id\": \"59074666719fca0bb6bd2e24\",
+        \"paymentType\": \"MONTH\",
+        \"cost\": 245,
+        \"limit\": 1,
+        \"name\": \"Безлимитный\",
+        \"accountType\": \"VIRTUAL_HOSTING\",
+        \"active\": true,
+        \"oldId\": \"plan_9802\",
+        \"servicesIdsWithLimits\": {},
+        \"paymentTypeKinds\": []
+      },
+      \"lastBilled\": \"2018-04-24T00:00:00\",
+      \"cost\": 245,
+      \"name\": \"Безлимитный\"
+    }
+  ],
+  \"ownerPersonId\": null,
+  \"properties\": {
+    \"angryClient\": null
+  },
+  \"credit\": false,
+  \"creditActivationDate\": null,
+  \"creditPeriod\": \"P14D\",
+  \"addQuotaIfOverquoted\": false,
+  \"notifyDays\": 14,
+  \"autoBillSending\": false,
+  \"accountNew\": false,
+  \"smsPhoneNumber\": null,
+  \"overquoted\": false,
+  \"abonementAutoRenew\": false
+}")
+
 (test-begin "account")
 
-(test-assert "gms-account-unix"
+(test-assert "gms-website"
   (mock ((gms scripts account) account-websites
          (lambda (account)
            (match (serialize-account account)
-             ("208112" test-foo-json)
+             ("208112" test-website-json)
              (_ (error "Nonexistent account: " account)))))
         (and (string=? (with-output-to-string
                          (lambda ()
@@ -342,6 +404,51 @@ infected: false
 writable: false
 sendmail_allowed: false
 ddos_protection: false
+
+")
+             (string=? (with-output-to-string
+                         (lambda ()
+                           (gms-account "domain" "ac_208112")))
+                       "\
+name: ac-208112.ru
+records: ac-208112.ru 3600 IN SOA ns.majordomo.ru. support.majordomo.ru. 2004032900 3600 900 3600000 3600
++ ac-208112.ru 3600 IN NS ns.majordomo.ru
++ ac-208112.ru 3600 IN NS ns2.majordomo.ru
++ ac-208112.ru 3600 IN NS ns3.majordomo.ru
++ ac-208112.ru 3600 IN A 185.84.108.20
++ ac-208112.ru 3600 IN A 185.84.108.20
++ ac-208112.ru 3600 IN MX mmxs.majordomo.ru
++ ac-208112.ru 3600 IN CNAME smtp.majordomo.ru
++ ac-208112.ru 3600 IN CNAME pop3.majordomo.ru
++ ac-208112.ru 3600 IN CNAME mail.majordomo.ru
+
+"))))
+
+(test-assert "gms-account"
+  (mock ((gms scripts account) fetch-account
+         (lambda (account)
+           (match (serialize-account account)
+             ("208112" test-account-json)
+             (_ (error "Nonexistent account: " account)))))
+        (and (string=? (with-output-to-string
+                         (lambda ()
+                           (gms-account "show" "ac_208112")))
+                       "\
+name: AC_208112
+active: false
+automatic_billing_sending: false
+notify_days: true
+credit: false
+
+")
+             (string=? (with-output-to-string
+                         (lambda ()
+                           (gms-account "service" "ac_208112")))
+                       "\
+name: Безлимитный
+cost: 245 rub
+enabled: true
+last_billed: 2018-04-24T00:00:00
 
 "))))
 

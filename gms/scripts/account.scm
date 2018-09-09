@@ -173,7 +173,8 @@ argument list and OPTS is the option alist."
                     (format #t "enabled: ~a~%"
                             (serialize-boolean (assoc-ref service "enabled")))
                     (format #t "last_billed: ~a~%"
-                            (assoc-ref service "lastBilled")))
+                            (assoc-ref service "lastBilled"))
+                    (newline))
                   (assoc-ref user "services")))))
 
     ((website)
