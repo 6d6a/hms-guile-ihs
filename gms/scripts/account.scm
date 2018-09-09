@@ -101,6 +101,14 @@ Fetch data about user.\n"))
                                       (string-length "ac_")))
         account))
 
+(define (account-websites account)
+  (let-values (((response body)
+                (http-get (string-append "https://api.majordomo.ru/" account "/website")
+                          #:headers `((content-type . (application/json))
+                                      (Authorization . ,(format #f "Bearer ~a" (auth))))
+                          #:keep-alive? #t)))
+    (map hash-table->alist (json-string->scm (utf8->string body)))))
+
 (define (process-command command args opts)
   "Process COMMAND, one of the 'gms server' sub-commands.  ARGS is its
 argument list and OPTS is the option alist."
@@ -111,12 +119,7 @@ argument list and OPTS is the option alist."
 
   (define (serialize-website-args procedure)
     (for-each (lambda (account)
-                (let-values (((response body)
-                              (http-get (string-append "https://api.majordomo.ru/" account "/website")
-                                        #:headers `((content-type . (application/json))
-                                                    (Authorization . ,(format #f "Bearer ~a" (auth))))
-                                        #:keep-alive? #t)))
-                  (procedure (hash-table->alist (car (json-string->scm (utf8->string body)))))))
+                (procedure (first (account-websites account))))
               args))
 
   (define (serialize-websites-args procedure)
