@@ -3,18 +3,18 @@
 ;;;
 ;;; This file is part of Guile HMS.
 ;;;
-;;; Guile HMS is free software; you can redistribute it and/or modify
-;;; it under the terms of the GNU General Public License as published
-;;; by the Free Software Foundation; either version 3 of the License,
-;;; or (at your option) any later version.
+;;; Guile HMS is free software; you can redistribute it and/or modify it under
+;;; the terms of the GNU General Public License as published by the Free
+;;; Software Foundation; either version 3 of the License, or (at your option)
+;;; any later version.
 ;;;
-;;; Guile HMS is distributed in the hope that it will be useful, but
-;;; WITHOUT ANY WARRANTY; without even the implied warranty of
-;;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-;;; General Public License for more details.
+;;; Guile HMS is distributed in the hope that it will be useful, but WITHOUT
+;;; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+;;; FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+;;; more details.
 ;;;
-;;; You should have received a copy of the GNU General Public License
-;;; along with Guile HMS.  If not, see <http://www.gnu.org/licenses/>.
+;;; You should have received a copy of the GNU General Public License along
+;;; with Guile HMS.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (hms scripts account)
   #:use-module ((guix scripts) #:select (parse-command-line))
@@ -23,6 +23,7 @@
   #:use-module (hms ui)
   #:use-module (json)
   #:use-module (rnrs bytevectors)
+  #:use-module (ice-9 match)
   #:use-module (srfi srfi-1)
   #:use-module (srfi srfi-11)
   #:use-module (srfi srfi-37)
@@ -32,14 +33,18 @@
 
 (define (show-help)
   (display (G_ "Usage: hms account [OPTION ...] ACTION [ARG ...]
-Fetch data about user."))
+Fetch data about user.\n"))
   (newline)
   (display (G_ "The valid values for ACTION are:\n"))
   (newline)
   (display (G_ "\
+   domain                show domains on account\n"))
+  (display (G_ "\
    service               search for existing service types\n"))
   (display (G_ "\
    show                  show user\n"))
+  (display (G_ "\
+   unix                  show unix account\n"))
   (newline)
   (display (G_ "
   -h, --help             display this help and exit"))
@@ -70,15 +75,18 @@ Fetch data about user."))
       (alist-cons 'argument arg result)
       (let ((action (string->symbol arg)))
         (case action
-          ((show service)
+          ((domain service show unix website)
            (alist-cons 'action action result))
           (else (leave (G_ "~a: unknown action~%") action))))))
 
 (define (fetch-account account)
   (let-values (((response body)
-                (http-get (string-append "https://api.majordomo.ru/" account "/account")
-                          #:headers `((content-type . (application/json))
-                                      (Authorization . ,(format #f "Bearer ~a" (auth))))
+                (http-get (string-append "https://api.majordomo.ru/" account
+                                         "/account")
+                          #:headers `((content-type
+                                       . (application/json))
+                                      (Authorization
+                                       . ,(format #f "Bearer ~a" (auth))))
                           #:keep-alive? #t)))
     (utf8->string body)))
 
@@ -93,6 +101,27 @@ argument list and OPTS is the option alist."
                 (procedure (account->scm account)))
               args))
 
+  (define (serialize-website-args procedure)
+    (for-each (lambda (account)
+                (let-values (((response body)
+                              (http-get (string-append "https://api.majordomo.ru/" account "/website")
+                                        #:headers `((content-type . (application/json))
+                                                    (Authorization . ,(format #f "Bearer ~a" (auth))))
+                                        #:keep-alive? #t)))
+                  (procedure (hash-table->alist (car (json-string->scm (utf8->string body)))))))
+              args))
+
+  (define (serialize-websites-args procedure)
+    (for-each (lambda (account)
+                (let-values (((response body)
+                              (http-get (string-append "https://api.majordomo.ru/" account "/website")
+                                        #:headers `((content-type . (application/json))
+                                                    (Authorization . ,(format #f "Bearer ~a" (auth))))
+                                        #:keep-alive? #t)))
+                  (for-each procedure
+                            (map hash-table->alist (json-string->scm (utf8->string body))))))
+              args))
+
   (case command
     ((show)
      (serialize-args
@@ -100,17 +129,13 @@ argument list and OPTS is the option alist."
         (format #t "name: ~a~%"
                 (assoc-ref user "name"))
         (format #t "active: ~a~%"
-                (serialize-boolean
-                 (assoc-ref user "active")))
+                (serialize-boolean (assoc-ref user "active")))
         (format #t "automatic_billing_sending: ~a~%"
-                (serialize-boolean
-                 (assoc-ref user "autoBillSending")))
+                (serialize-boolean (assoc-ref user "autoBillSending")))
         (format #t "notify_days: ~a~%"
-                (serialize-boolean
-                 (assoc-ref user "notifyDays")))
+                (serialize-boolean (assoc-ref user "notifyDays")))
         (format #t "credit: ~a~%"
-                (serialize-boolean
-                 (assoc-ref user "credit")))
+                (serialize-boolean (assoc-ref user "credit")))
         (newline))))
 
     ((service)
@@ -122,18 +147,89 @@ argument list and OPTS is the option alist."
                     (format #t "cost: ~a rub~%"
                             (assoc-ref service "cost"))
                     (format #t "enabled: ~a~%"
-                            (serialize-boolean
-                             (assoc-ref service "enabled")))
+                            (serialize-boolean (assoc-ref service "enabled")))
                     (format #t "last_billed: ~a~%"
                             (assoc-ref service "lastBilled")))
-                  (assoc-ref user "services")))))))
+                  (assoc-ref user "services")))))
+
+    ((website)
+     (serialize-websites-args
+      (lambda (user)
+        (format #t "name: ~a~%"
+                (assoc-ref user "name"))
+        (format #t "document_root: ~a~%"
+                (assoc-ref user "documentRoot"))
+        (format #t "auto_sub_domain: ~a~%"
+                (serialize-boolean (assoc-ref user "autoSubDomain")))
+        (format #t "index_file_list: ~a~%"
+                (string-join (sort (assoc-ref user "indexFileList")
+                                   string<)))
+        (format #t "static_file_extensions: ~a~%"
+                (string-join (sort (assoc-ref user "staticFileExtensions")
+                                   string<)))
+        (format #t "cgi_enabled: ~a~%"
+                (serialize-boolean (assoc-ref user "cgiEnabled")))
+        (format #t "cgi_file_extensions: ~a~%"
+                (string-join (assoc-ref user "cgiFileExtensions")))
+        (format #t "infected: ~a~%"
+                (serialize-boolean (assoc-ref user "infected")))
+        (format #t "writable: ~a~%"
+                (serialize-boolean (assoc-ref user "writable")))
+        (format #t "sendmail_allowed: ~a~%"
+                (serialize-boolean (assoc-ref user "sendmailAllowed")))
+        (format #t "ddos_protection: ~a~%"
+                (serialize-boolean (assoc-ref user "ddosProtection")))
+        (newline))))
+
+    ((unix)
+     (serialize-website-args
+      (lambda (user)
+        (let ((unix-account (assoc-ref user "unixAccount")))
+          (format #t "quota: ~a/~a GB~%"
+                  (serialize-quota (assoc-ref unix-account "quotaUsed"))
+                  (serialize-quota (assoc-ref unix-account "quota")))
+          (format #t "server_id: ~a~%" (assoc-ref unix-account "serverId"))
+          (format #t "home_dir: ~a~%" (assoc-ref unix-account "homeDir"))
+          (newline)))))
+
+    ((domain)
+     (serialize-websites-args
+      (lambda (user)
+        (for-each (lambda (domain)
+                    (format #t "name: ~a~%" (assoc-ref domain "name"))
+                    (match (assoc-ref domain "dnsResourceRecords")
+                      ((record records ...)
+                       (format #t "records: ~a ~a ~a ~a ~a\n"
+                               (assoc-ref record "name")
+                               (assoc-ref record "ttl")
+                               (assoc-ref record "rrClass")
+                               (assoc-ref record "rrType")
+                               (assoc-ref record "data"))
+                       (for-each (lambda (record)
+                                   (format #t "+ ~a ~a ~a ~a ~a\n"
+                                           (assoc-ref record "name")
+                                           (assoc-ref record "ttl")
+                                           (assoc-ref record "rrClass")
+                                           (assoc-ref record "rrType")
+                                           (assoc-ref record "data")))
+                                 records))
+                      (_ '()))
+                    (newline))
+                  (assoc-ref user "domains")))))))
 
 (define (hms-account . args)
+  (define (serialize-account account)
+    (if (string-prefix? "ac" account)
+        (string-take-right account (- (string-length account)
+                                      (string-length "ac_")))
+        account))
+
   ;; TODO: with-error-handling
   (let* ((opts (parse-command-line args %options
                                    (list %default-options)
                                    #:argument-handler
                                    parse-sub-command))
-         (args (option-arguments opts))
+         (args (map (compose serialize-account string-downcase)
+                    (option-arguments opts)))
          (command (assoc-ref opts 'action)))
     (process-command command args opts)))

@@ -3,39 +3,34 @@
 ;;;
 ;;; This file is part of Guile HMS.
 ;;;
-;;; Guile HMS is free software; you can redistribute it and/or modify
-;;; it under the terms of the GNU General Public License as published
-;;; by the Free Software Foundation; either version 3 of the License,
-;;; or (at your option) any later version.
+;;; Guile HMS is free software; you can redistribute it and/or modify it under
+;;; the terms of the GNU General Public License as published by the Free
+;;; Software Foundation; either version 3 of the License, or (at your option)
+;;; any later version.
 ;;;
-;;; Guile HMS is distributed in the hope that it will be useful, but
-;;; WITHOUT ANY WARRANTY; without even the implied warranty of
-;;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-;;; GNU General Public License for more details.
+;;; Guile HMS is distributed in the hope that it will be useful, but WITHOUT
+;;; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+;;; FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+;;; more details.
 ;;;
-;;; You should have received a copy of the GNU General Public License
-;;; along with Guile HMS.  If not, see <http://www.gnu.org/licenses/>.
+;;; You should have received a copy of the GNU General Public License along
+;;; with Guile HMS.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (hms scripts server)
-  #:use-module (hms ui)
+  #:use-module ((guix scripts) #:select (parse-command-line))
+  #:use-module ((guix ui)  #:select (leave G_))
   #:use-module (hms scripts)
-  #:use-module (ice-9 match)
-  #:use-module (ice-9 pretty-print)
-  #:use-module (srfi srfi-1)
-  #:use-module (srfi srfi-11)
-  #:use-module (srfi srfi-26)
-  #:use-module (srfi srfi-37)
-  #:use-module (web client)
+  #:use-module (hms ui)
   #:use-module (json)
   #:use-module (rnrs bytevectors)
-  #:use-module (guix scripts)
-  #:use-module ((guix ui)  #:select (leave G_))
+  #:use-module (srfi srfi-1)
+  #:use-module (srfi srfi-37)
+  #:use-module (web client)
   #:export (hms-server))
 
 (define (show-help)
-  (display (G_ "Usage: guix system [OPTION ...] ACTION [ARG ...] [FILE]
-Build the operating system declared in FILE according to ACTION.
-Some ACTIONS support additional ARGS.\n"))
+  (display (G_ "Usage: hms server [OPTION ...] ACTION [ARG ...] [FILE]
+Fetch data about server.\n"))
   (newline)
   (display (G_ "The valid values for ACTION are:\n"))
   (newline)
@@ -57,11 +52,7 @@ Some ACTIONS support additional ARGS.\n"))
   (list (option '(#\h "help") #f #f
                  (lambda args
                    (show-help)
-                   (exit 0)))
-        (option '(#\s "service") #t #f
-                (lambda (opt name arg result)
-                  (alist-cons 'service arg
-                              (alist-delete 'system result eq?))))))
+                   (exit 0)))))
 
 (define %default-options '())
 
@@ -132,32 +123,34 @@ argument list and OPTS is the option alist."
                                    (newline))
                                  (assoc-ref server "storages")))))
     ((socket)
-     (serialize-args (lambda (server)
-                       (for-each (lambda (service)
-                                   (for-each (lambda (socket)
-                                               (format #t "id: ~a~%"
-                                                       (assoc-ref socket "id"))
-                                               (format #t "name: ~a~%"
-                                                       (assoc-ref socket "name"))
-                                               (format #t "address: ~a~%"
-                                                       (assoc-ref socket "address"))
-                                               (format #t "port: ~a~%"
-                                                       (assoc-ref socket "port"))
-                                               (format #t "online: ~a~%"
-                                                       (serialize-boolean
-                                                        (assoc-ref socket "switchedOn")))
-                                               (newline))
-                                             (assoc-ref service "serviceSockets")))
-                                 (assoc-ref server "services")))))
+     (serialize-args
+      (lambda (server)
+        (for-each (lambda (service)
+                    (for-each (lambda (socket)
+                                (format #t "id: ~a~%"
+                                        (assoc-ref socket "id"))
+                                (format #t "name: ~a~%"
+                                        (assoc-ref socket "name"))
+                                (format #t "address: ~a~%"
+                                        (assoc-ref socket "address"))
+                                (format #t "port: ~a~%"
+                                        (assoc-ref socket "port"))
+                                (format #t "online: ~a~%"
+                                        (serialize-boolean
+                                         (assoc-ref socket "switchedOn")))
+                                (newline))
+                              (assoc-ref service "serviceSockets")))
+                  (assoc-ref server "services")))))
     ((show)
-     (serialize-args (lambda (server)
-                       (format #t "id: ~a~%"
-                               (assoc-ref server "id"))
-                       (format #t "name: ~a~%"
-                               (assoc-ref server "name"))
-                       (format #t "online: ~a~%"
-                               (serialize-boolean (assoc-ref server "switchedOn")))
-                       (newline))))))
+     (serialize-args
+      (lambda (server)
+        (format #t "id: ~a~%"
+                (assoc-ref server "id"))
+        (format #t "name: ~a~%"
+                (assoc-ref server "name"))
+        (format #t "online: ~a~%"
+                (serialize-boolean (assoc-ref server "switchedOn")))
+        (newline))))))
 
 (define (hms-server . args)
   ;; TODO: with-error-handling
