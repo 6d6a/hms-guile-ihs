@@ -80,6 +80,16 @@ Some ACTIONS support additional ARGS.\n"))
          (lambda ()
            (write (map hash-table->alist (json-string->scm (utf8->string body))))))))
 
+(define (parse-sub-command arg result)
+  ;; Parse sub-command ARG and augment RESULT accordingly.
+  (if (assoc-ref result 'action)
+      (alist-cons 'argument arg result)
+      (let ((action (string->symbol arg)))
+        (case action
+          ((service show socket storage)
+           (alist-cons 'action action result))
+          (else (leave (G_ "~a: unknown action~%") action))))))
+
 ;; TODO: Use json.
 #;(map hash-table->alist (json-string->scm (utf8->string body)))
 #;(list (hash-table->alist (list-ref (json-string->scm (utf8->string body)) 23)))
@@ -95,18 +105,6 @@ argument list and OPTS is the option alist."
                                 '()))
                           (with-input-from-file "/tmp/hms-servers.scm" read)))
               args))
-
-  (define (serialize-boolean value)
-    (if value "true" "false"))
-
-  (define (serialize-quota value)
-    (let ((size (number->string (/ (/ (/ value 1024.0) 1024.0) 1024.0))))
-      (match (string-split size #\.)
-        ((natural decimal)
-         (string-append natural "."
-                        (if (> (string-length decimal) 2)
-                            (string-take decimal 2)
-                            decimal))))))
 
   (case command
     ((service)

@@ -11,22 +11,11 @@
   #:use-module (rnrs bytevectors)
   #:use-module (guix scripts)
   #:use-module ((guix ui)  #:select (leave G_))
-  #:export (parse-sub-command
-            match-pair
+  #:export (match-pair
             option-arguments
             serialize-boolean
             serialize-field
             serialize-quota))
-
-(define (parse-sub-command arg result)
-  ;; Parse sub-command ARG and augment RESULT accordingly.
-  (if (assoc-ref result 'action)
-      (alist-cons 'argument arg result)
-      (let ((action (string->symbol arg)))
-        (case action
-          ((service show socket storage)
-           (alist-cons 'action action result))
-          (else (leave (G_ "~a: unknown action~%") action))))))
 
 (define (match-pair car)
   ;; Return a procedure that matches a pair with CAR.
