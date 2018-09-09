@@ -130,13 +130,7 @@ argument list and OPTS is the option alist."
 
   (define (serialize-websites-args procedure)
     (for-each (lambda (account)
-                (let-values (((response body)
-                              (http-get (string-append "https://api.majordomo.ru/" account "/website")
-                                        #:headers `((content-type . (application/json))
-                                                    (Authorization . ,(format #f "Bearer ~a" (auth))))
-                                        #:keep-alive? #t)))
-                  (for-each procedure
-                            (map hash-table->alist (json-string->scm (utf8->string body))))))
+                (for-each procedure (account-websites->scm account)))
               args))
 
   (define (serialize-search-user-args procedure)

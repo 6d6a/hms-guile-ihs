@@ -23,14 +23,7 @@
   #:use-module (ice-9 match)
   #:use-module (srfi srfi-64))
 
-(test-begin "account")
-
-(test-assert "gms-account-unix"
-  (mock ((gms scripts account) account-websites
-         (lambda (account)
-           (match (serialize-account account)
-             ("208112"
-              "[
+(define test-foo-json "[
   {
     \"@type\": \"WebSite\",
     \"id\": \"5ac4a2f137c47a00072b9350\",
@@ -246,28 +239,56 @@
         ],
         \"autoRenew\": false,
         \"parentDomainId\": null,
-        \"synced\": [2018, 4, 4, 14, 4, 11, 20000000],
+        \"synced\": [
+          2018,
+          4,
+          4,
+          14,
+          4,
+          11,
+          20000000
+        ],
         \"locked\": false,
         \"willBeDeleted\": false
       }
     ],
     \"charSet\": \"UTF8\",
     \"ssiEnabled\": false,
-    \"ssiFileExtensions\": [\"shtml\", \"shtm\"],
+    \"ssiFileExtensions\": [
+      \"shtml\",
+      \"shtm\"
+    ],
     \"cgiEnabled\": false,
-    \"cgiFileExtensions\": [\"cgi\" ,\"pl\"],
+    \"cgiFileExtensions\": [
+      \"cgi\",
+      \"pl\"
+    ],
     \"scriptAlias\": \"ac-208112.ru/www/cgi-bin\",
     \"ddosProtection\": false,
     \"autoSubDomain\": false,
     \"accessByOldHttpVersion\": false,
     \"staticFileExtensions\": [
-      \"ogg\", \"mp3\", \"avi\", \"mpeg\", 
-      \"js\", \"css\", \"swf\", 
-      \"bz2\", \"gz\", \"rar\", \"zip\", 
-      \"gif\", \"jpg\", \"png\", \"svg\"
+      \"ogg\",
+      \"mp3\",
+      \"avi\",
+      \"mpeg\",
+      \"js\",
+      \"css\",
+      \"swf\",
+      \"bz2\",
+      \"gz\",
+      \"rar\",
+      \"zip\",
+      \"gif\",
+      \"jpg\",
+      \"png\",
+      \"svg\"
     ],
     \"customUserConf\": \"\",
-    \"indexFileList\": [\"index.php\", \"index.html\"],
+    \"indexFileList\": [
+      \"index.php\",
+      \"index.html\"
+    ],
     \"accessLogEnabled\": true,
     \"errorLogEnabled\": true,
     \"followSymLinks\": true,
@@ -288,12 +309,40 @@
     \"willBeDeleted\": false
   }
 ]")
+
+(test-begin "account")
+
+(test-assert "gms-account-unix"
+  (mock ((gms scripts account) account-websites
+         (lambda (account)
+           (match (serialize-account account)
+             ("208112" test-foo-json)
              (_ (error "Nonexistent account: " account)))))
-        (string=? (with-output-to-string
-                    (lambda ()
-                      (gms-account "unix" "ac_208112")))
-                  (string-append "quota: 0.48/10.0 GB\n"
-                                 "server_id: web_server_134\n"
-                                 "home_dir: /home/u7590\n\n"))))
+        (and (string=? (with-output-to-string
+                         (lambda ()
+                           (gms-account "unix" "ac_208112")))
+                       "\
+quota: 0.48/10.0 GB
+server_id: web_server_134
+home_dir: /home/u7590
+
+")
+             (string=? (with-output-to-string
+                         (lambda ()
+                           (gms-account "website" "ac_208112")))
+                       "\
+name: ac-208112.ru
+document_root: ac-208112.ru/www
+auto_sub_domain: false
+index_file_list: index.html index.php
+static_file_extensions: avi bz2 css gif gz jpg js mp3 mpeg ogg png rar svg swf zip
+cgi_enabled: false
+cgi_file_extensions: cgi pl
+infected: false
+writable: false
+sendmail_allowed: false
+ddos_protection: false
+
+"))))
 
 (test-end "account")
