@@ -17,270 +17,283 @@
 ;;; with Guile GMS.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (test-account)
-  #:use-module ((guix scripts) #:select (parse-command-line))
-  #:use-module ((guix ui) #:select (G_ leave))
   #:use-module (guix tests)
   #:use-module (gms scripts)
   #:use-module (gms scripts account)
-  #:use-module (gms scripts search)
-  #:use-module (gms ui)
-  #:use-module (json)
-  #:use-module (rnrs bytevectors)
   #:use-module (ice-9 match)
-  #:use-module (srfi srfi-1)
-  #:use-module (srfi srfi-11)
-  #:use-module (srfi srfi-37)
-  #:use-module (srfi srfi-64)
-  #:use-module (web client))
+  #:use-module (srfi srfi-64))
 
 (test-begin "account")
 
-(test-assert "account-test"
-  (mock ((gms ui) auth
-         (lambda (user pass)
-           "88888888"))
-        (mock ((gms scripts account) account-websites
-               (lambda (account)
-                 (match (serialize-account account)
-                   ("208112"
-                    '((("opcacheMaxAcceleratedFiles")
-                       ("willBeDeleted" . #f)
-                       ("allowUrlFopen" . #t)
-                       ("errorLogEnabled" . #t)
-                       ("documentRoot" . "ac-208112.ru/www")
-                       ("scriptAlias" . "ac-208112.ru/www/cgi-bin")
-                       ("charSet" . "UTF8")
-                       ("ssiEnabled" . #f)
-                       ("accessLogEnabled" . #t)
-                       ("domains"
-                        (("willBeDeleted" . #f)
-                         ("id" . "5ac4a28837c47a00072b934f")
-                         ("parentDomainId")
-                         ("name" . "ac-208112.ru")
-                         ("accountId" . "208112")
-                         ("switchedOn" . #f)
-                         ("synced" 2018 4 4 14 4 11 20000000)
-                         ("@type" . "Domain")
-                         ("regSpec")
-                         ("sslCertificate")
-                         ("dnsResourceRecords"
-                          (("data"
-                            .
-                            "ns.majordomo.ru. support.majordomo.ru. 2004032900 3600 900 3600000 3600")
-                           ("willBeDeleted" . #f)
-                           ("id")
-                           ("name" . "ac-208112.ru")
-                           ("accountId")
-                           ("switchedOn" . #t)
-                           ("rrClass" . "IN")
-                           ("@type" . "DNSResourceRecord")
-                           ("prio")
-                           ("recordId" . 16793323)
-                           ("ttl" . 3600)
-                           ("domainId" . 10893716)
-                           ("ownerName" . "ac-208112.ru")
-                           ("locked" . #f)
-                           ("rrType" . "SOA"))
-                          (("data" . "ns.majordomo.ru")
-                           ("willBeDeleted" . #f)
-                           ("id")
-                           ("name" . "ac-208112.ru")
-                           ("accountId")
-                           ("switchedOn" . #t)
-                           ("rrClass" . "IN")
-                           ("@type" . "DNSResourceRecord")
-                           ("prio")
-                           ("recordId" . 16793324)
-                           ("ttl" . 3600)
-                           ("domainId" . 10893716)
-                           ("ownerName" . "ac-208112.ru")
-                           ("locked" . #f)
-                           ("rrType" . "NS"))
-                          (("data" . "ns2.majordomo.ru")
-                           ("willBeDeleted" . #f)
-                           ("id")
-                           ("name" . "ac-208112.ru")
-                           ("accountId")
-                           ("switchedOn" . #t)
-                           ("rrClass" . "IN")
-                           ("@type" . "DNSResourceRecord")
-                           ("prio")
-                           ("recordId" . 16793325)
-                           ("ttl" . 3600)
-                           ("domainId" . 10893716)
-                           ("ownerName" . "ac-208112.ru")
-                           ("locked" . #f)
-                           ("rrType" . "NS"))
-                          (("data" . "ns3.majordomo.ru")
-                           ("willBeDeleted" . #f)
-                           ("id")
-                           ("name" . "ac-208112.ru")
-                           ("accountId")
-                           ("switchedOn" . #t)
-                           ("rrClass" . "IN")
-                           ("@type" . "DNSResourceRecord")
-                           ("prio")
-                           ("recordId" . 16793326)
-                           ("ttl" . 3600)
-                           ("domainId" . 10893716)
-                           ("ownerName" . "ac-208112.ru")
-                           ("locked" . #f)
-                           ("rrType" . "NS"))
-                          (("data" . "185.84.108.20")
-                           ("willBeDeleted" . #f)
-                           ("id")
-                           ("name" . "ac-208112.ru")
-                           ("accountId")
-                           ("switchedOn" . #t)
-                           ("rrClass" . "IN")
-                           ("@type" . "DNSResourceRecord")
-                           ("prio")
-                           ("recordId" . 16793327)
-                           ("ttl" . 3600)
-                           ("domainId" . 10893716)
-                           ("ownerName" . "ac-208112.ru")
-                           ("locked" . #f)
-                           ("rrType" . "A"))
-                          (("data" . "185.84.108.20")
-                           ("willBeDeleted" . #f)
-                           ("id")
-                           ("name" . "ac-208112.ru")
-                           ("accountId")
-                           ("switchedOn" . #t)
-                           ("rrClass" . "IN")
-                           ("@type" . "DNSResourceRecord")
-                           ("prio")
-                           ("recordId" . 16793328)
-                           ("ttl" . 3600)
-                           ("domainId" . 10893716)
-                           ("ownerName" . "*.ac-208112.ru")
-                           ("locked" . #f)
-                           ("rrType" . "A"))
-                          (("data" . "mmxs.majordomo.ru")
-                           ("willBeDeleted" . #f)
-                           ("id")
-                           ("name" . "ac-208112.ru")
-                           ("accountId")
-                           ("switchedOn" . #t)
-                           ("rrClass" . "IN")
-                           ("@type" . "DNSResourceRecord")
-                           ("prio" . 10)
-                           ("recordId" . 16793329)
-                           ("ttl" . 3600)
-                           ("domainId" . 10893716)
-                           ("ownerName" . "ac-208112.ru")
-                           ("locked" . #f)
-                           ("rrType" . "MX"))
-                          (("data" . "smtp.majordomo.ru")
-                           ("willBeDeleted" . #f)
-                           ("id")
-                           ("name" . "ac-208112.ru")
-                           ("accountId")
-                           ("switchedOn" . #t)
-                           ("rrClass" . "IN")
-                           ("@type" . "DNSResourceRecord")
-                           ("prio")
-                           ("recordId" . 16793330)
-                           ("ttl" . 3600)
-                           ("domainId" . 10893716)
-                           ("ownerName" . "smtp.ac-208112.ru")
-                           ("locked" . #f)
-                           ("rrType" . "CNAME"))
-                          (("data" . "pop3.majordomo.ru")
-                           ("willBeDeleted" . #f)
-                           ("id")
-                           ("name" . "ac-208112.ru")
-                           ("accountId")
-                           ("switchedOn" . #t)
-                           ("rrClass" . "IN")
-                           ("@type" . "DNSResourceRecord")
-                           ("prio")
-                           ("recordId" . 16793331)
-                           ("ttl" . 3600)
-                           ("domainId" . 10893716)
-                           ("ownerName" . "pop3.ac-208112.ru")
-                           ("locked" . #f)
-                           ("rrType" . "CNAME"))
-                          (("data" . "mail.majordomo.ru")
-                           ("willBeDeleted" . #f)
-                           ("id")
-                           ("name" . "ac-208112.ru")
-                           ("accountId")
-                           ("switchedOn" . #t)
-                           ("rrClass" . "IN")
-                           ("@type" . "DNSResourceRecord")
-                           ("prio")
-                           ("recordId" . 16793332)
-                           ("ttl" . 3600)
-                           ("domainId" . 10893716)
-                           ("ownerName" . "mail.ac-208112.ru")
-                           ("locked" . #f)
-                           ("rrType" . "CNAME")))
-                         ("person")
-                         ("locked" . #f)
-                         ("autoRenew" . #f)))
-                       ("allowUrlInclude")
-                       ("displayErrors")
-                       ("realpathCacheSize")
-                       ("indexFileList" "index.php" "index.html")
-                       ("followSymLinks" . #t)
-                       ("requestOrder")
-                       ("mbstringInternalEncoding")
-                       ("locked" . #f)
-                       ("mbstringFuncOverload" . 0)
-                       ("serviceId" . "590887c9719fca7d7243e9fa")
-                       ("accountId" . "208112")
-                       ("cgiFileExtensions" "cgi" "pl")
-                       ("cgiEnabled" . #f)
-                       ("ssiFileExtensions" "shtml" "shtm")
-                       ("autoSubDomain" . #f)
-                       ("multiViews" . #f)
-                       ("sessionUseTransSid")
-                       ("customUserConf" . "")
-                       ("maxInputVars")
-                       ("accessByOldHttpVersion" . #f)
-                       ("@type" . "WebSite")
-                       ("unixAccount"
-                        ("quotaUsed" . 523423744)
-                        ("keyPair"
-                         ("privateKey"
-                          .
-                          "-----BEGIN RSA PRIVATE KEY-----\nMIIEpAIBAAKCAQEAnS5wNIICj7BjEfX9KvAGqUr6jXW8O3XInsP6wgXka/AWBSfk\nU0Hbqa16hj5IzrP/B1K0YexoEYxrupl8P6aJo/0ryFYg6RxU1yD4ifBEbMV8Hthj\nEPKjOAokpBbpj4Ac91FwNuevJ9jRNlqRUnJ1gO/dnOp9nEocJtR9vCVLBk1zClb6\nykeEtQVZbAuUFlmMnptldi6dlLJ54srCv7+uzKRt3t0ve/LZwaLnNycjXZFYClS6\n77eJAn3YcAKqDVbO29oskkyMJsuoYh5x1Plx/Q3cOFEmldmW4QfY4S15tgtaYVLi\nmJrOcHvRjRodKyQbm2zVrmpM6SkHcS4pZII6owIDAQABAoIBAFZuoNje3RWygufv\ngsXHs4IIbvq20UlJHYbgcdWbc94+6XzwUMfPoUEO2h9TxKmVpRmbywFGBHwR4XN8\nzywZIfsBTsAdTH+jSqv5v3Hqo1XEytoTV3aMVmCMg1WQG+MDKep959zpThH1UiY3\na04RDrhWLmEJOQVmY1Ce7H03bKgLsB0Y8YT13UjlZDfxoQzNTxMHWMgjf5K2bYn2\nvjCsyKY2sMUpwfYs2sQVmcx9EqCVRfvJosr3x6CKC0OWzF6U6ys9nKl0nFglfg4n\nLwYAKYdL5LjPE9z0DPGduLH5jeL+Jti5QFwOE+9FK1Kd9oRu6pPF5p4onaenqt8D\nz3NDTjECgYEA/Vv2ouXcMqzLWiSvv5et6BC+d7/IHMpMcvUidSeTxKIXTJUxCSak\n+MTWnXfqVan1LyCZbaYmPO2+k7wFzMj+qGD1DLqPxdRyb6RzlNDNiEE9IQz3X/V1\nHOCMu2U84udxTxGoPnDzLyAxTEe6lEzQe97BEAce8sS+Axt8Pv4jfz0CgYEAntHY\nIl/T2v+j/Ue+TrdtAQbOXhTDRz/2nLn/ekB6RbmF9mz1nxv8iSp8X43ySvu9pGit\nCKI+uHc4Qi1Cm56qK583pAFFMaM+4UiiOzAFVFzbvdl50pa7cJIWB08OsfelaT4/\ncKT5Pi73oaTzRHx8SsXcEul2fJB/SXKziC1+P18CgYEA+nDDVba9eWIRCSQmjc7T\nWwfiHuD2YG8gLqpdy0y55q8LNOpstEz82eNI+hMlElSURmeFAjwwpB2mOsarPQiZ\nobtlv5VStQ0RqYX3smzMHhnO4TK9/J7Xixn0QvEJxIlfGfesRTzFRhoeYPauWhWs\nKCXC1aMUVolgAhZTNLlmQUkCgYEAgr9cwMfFQJiOp9glWuZ0zZCN2jQbo4+L9fDF\n2x4zyyz1lS6Ucx12JHIenAfevU5MDIrEUMRJAFHdtdVO7ZCMpYbZJqKJFVlATfUe\n4b0h1hbwLHZabTz8KKuLiQ7TmT24JlFBpvmZ21CNOrzyLKKTLHeBOuyKR/gpYg0U\nsfpJ4d8CgYACdO+aBOAMcrzRwFDPg5aT8x3sJs5nf2PpC1EHJb5fPQ2vnZuc3VAN\nLDqxJdTd3GD1TyQgwP6unvazu08rNHrh5u/UGYNnlwxoC8IT+1hF3VEVgyfbw7Mv\ngq12c61CKUbqg/XLJQMkjca1/POozgqChOtH9K3f2Cqyi0BCBxokgA==\n-----END RSA PRIVATE KEY-----\n")
-                         ("publicKey"
-                          .
-                          "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCdLnA0ggKPsGMR9f0q8AapSvqNdbw7dciew/rCBeRr8BYFJ+RTQduprXqGPkjOs/8HUrRh7GgRjGu6mXw/pomj/SvIViDpHFTXIPiJ8ERsxXwe2GMQ8qM4CiSkFumPgBz3UXA2568n2NE2WpFScnWA792c6n2cShwm1H28JUsGTXMKVvrKR4S1BVlsC5QWWYyem2V2Lp2UsnniysK/v67MpG3e3S978tnBouc3JyNdkVgKVLrvt4kCfdhwAqoNVs7b2iySTIwmy6hiHnHU+XH9Ddw4USaV2ZbhB9jhLXm2C1phUuKYms5we9GNGh0rJBubbNWuakzpKQdxLilkgjqj \n"))
-                        ("serverId" . "web_server_134")
-                        ("willBeDeleted" . #f)
-                        ("id" . "5ac4930337c47a00072b9341")
-                        ("quota" . 10737418240)
-                        ("name" . "u7590")
-                        ("accountId" . "208112")
-                        ("switchedOn" . #f)
-                        ("homeDir" . "/home/u7590")
-                        ("@type" . "UnixAccount")
-                        ("infected" . #f)
-                        ("writable" . #t)
-                        ("crontab")
-                        ("sendmailAllowed" . #t)
-                        ("passwordHash"
-                         .
-                         "$6$DTlxPNlV$DG9wj2EyD4EntP/bv5SWTrte7pk8j2AhwdQT1QMOWCOYK6Vuo18vrlIir01nQ44gwPSdq4YVXPf6AhFferWci/")
-                        ("locked" . #f)
-                        ("uid" . 14858))
-                       ("id" . "5ac4a2f137c47a00072b9350")
-                       ("switchedOn" . #f)
-                       ("ddosProtection" . #f)
-                       ("opcacheRevalidateFreq")
-                       ("memoryLimit")
-                       ("name" . "ac-208112.ru")
-                       ("staticFileExtensions"
-                        "ogg" "mp3" "avi" "mpeg" "js" "css" "swf" "bz2" "gz"
-                        "rar" "zip" "gif" "jpg" "png" "svg")))))))
-              (string=? (with-output-to-string
-                          (lambda ()
-                            (gms-account "unix" "ac_208112")))
-                        (string-append "quota: 0.48/10.0 GB\n"
-                                       "server_id: web_server_134\n"
-                                       "home_dir: /home/u7590\n\n")))))
+(test-assert "gms-account-unix"
+  (mock ((gms scripts account) account-websites
+         (lambda (account)
+           (match (serialize-account account)
+             ("208112"
+              "[
+  {
+    \"@type\": \"WebSite\",
+    \"id\": \"5ac4a2f137c47a00072b9350\",
+    \"name\": \"ac-208112.ru\",
+    \"accountId\": \"208112\",
+    \"switchedOn\": false,
+    \"unixAccount\": {
+      \"@type\": \"UnixAccount\",
+      \"id\": \"5ac4930337c47a00072b9341\",
+      \"name\": \"u7590\",
+      \"accountId\": \"208112\",
+      \"switchedOn\": false,
+      \"uid\": 14858,
+      \"homeDir\": \"/home/u7590\",
+      \"serverId\": \"web_server_134\",
+      \"quota\": 10737418240,
+      \"quotaUsed\": 523423744,
+      \"writable\": true,
+      \"sendmailAllowed\": true,
+      \"passwordHash\": \"$6$DTlxPNlV$DG9wj2EyD4EntP/bv5SWTrte7pk8j2AhwdQT1QMOWCOYK6Vuo18vrlIir01nQ44gwPSdq4YVXPf6AhFferWci/\",
+      \"keyPair\": {
+        \"privateKey\": \"-----BEGIN RSA PRIVATE KEY-----\\nMIIEpAIBAAKCAQEAnS5wNIICj7BjEfX9KvAGqUr6jXW8O3XInsP6wgXka/AWBSfk\\nU0Hbqa16hj5IzrP/B1K0YexoEYxrupl8P6aJo/0ryFYg6RxU1yD4ifBEbMV8Hthj\\nEPKjOAokpBbpj4Ac91FwNuevJ9jRNlqRUnJ1gO/dnOp9nEocJtR9vCVLBk1zClb6\\nykeEtQVZbAuUFlmMnptldi6dlLJ54srCv7+uzKRt3t0ve/LZwaLnNycjXZFYClS6\\n77eJAn3YcAKqDVbO29oskkyMJsuoYh5x1Plx/Q3cOFEmldmW4QfY4S15tgtaYVLi\\nmJrOcHvRjRodKyQbm2zVrmpM6SkHcS4pZII6owIDAQABAoIBAFZuoNje3RWygufv\\ngsXHs4IIbvq20UlJHYbgcdWbc94+6XzwUMfPoUEO2h9TxKmVpRmbywFGBHwR4XN8\\nzywZIfsBTsAdTH+jSqv5v3Hqo1XEytoTV3aMVmCMg1WQG+MDKep959zpThH1UiY3\\na04RDrhWLmEJOQVmY1Ce7H03bKgLsB0Y8YT13UjlZDfxoQzNTxMHWMgjf5K2bYn2\\nvjCsyKY2sMUpwfYs2sQVmcx9EqCVRfvJosr3x6CKC0OWzF6U6ys9nKl0nFglfg4n\\nLwYAKYdL5LjPE9z0DPGduLH5jeL+Jti5QFwOE+9FK1Kd9oRu6pPF5p4onaenqt8D\\nz3NDTjECgYEA/Vv2ouXcMqzLWiSvv5et6BC+d7/IHMpMcvUidSeTxKIXTJUxCSak\\n+MTWnXfqVan1LyCZbaYmPO2+k7wFzMj+qGD1DLqPxdRyb6RzlNDNiEE9IQz3X/V1\\nHOCMu2U84udxTxGoPnDzLyAxTEe6lEzQe97BEAce8sS+Axt8Pv4jfz0CgYEAntHY\\nIl/T2v+j/Ue+TrdtAQbOXhTDRz/2nLn/ekB6RbmF9mz1nxv8iSp8X43ySvu9pGit\\nCKI+uHc4Qi1Cm56qK583pAFFMaM+4UiiOzAFVFzbvdl50pa7cJIWB08OsfelaT4/\\ncKT5Pi73oaTzRHx8SsXcEul2fJB/SXKziC1+P18CgYEA+nDDVba9eWIRCSQmjc7T\\nWwfiHuD2YG8gLqpdy0y55q8LNOpstEz82eNI+hMlElSURmeFAjwwpB2mOsarPQiZ\\nobtlv5VStQ0RqYX3smzMHhnO4TK9/J7Xixn0QvEJxIlfGfesRTzFRhoeYPauWhWs\\nKCXC1aMUVolgAhZTNLlmQUkCgYEAgr9cwMfFQJiOp9glWuZ0zZCN2jQbo4+L9fDF\\n2x4zyyz1lS6Ucx12JHIenAfevU5MDIrEUMRJAFHdtdVO7ZCMpYbZJqKJFVlATfUe\\n4b0h1hbwLHZabTz8KKuLiQ7TmT24JlFBpvmZ21CNOrzyLKKTLHeBOuyKR/gpYg0U\\nsfpJ4d8CgYACdO+aBOAMcrzRwFDPg5aT8x3sJs5nf2PpC1EHJb5fPQ2vnZuc3VAN\\nLDqxJdTd3GD1TyQgwP6unvazu08rNHrh5u/UGYNnlwxoC8IT+1hF3VEVgyfbw7Mv\\ngq12c61CKUbqg/XLJQMkjca1/POozgqChOtH9K3f2Cqyi0BCBxokgA==\\n-----END RSA PRIVATE KEY-----\\n\",
+        \"publicKey\": \"ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCdLnA0ggKPsGMR9f0q8AapSvqNdbw7dciew/rCBeRr8BYFJ+RTQduprXqGPkjOs/8HUrRh7GgRjGu6mXw/pomj/SvIViDpHFTXIPiJ8ERsxXwe2GMQ8qM4CiSkFumPgBz3UXA2568n2NE2WpFScnWA792c6n2cShwm1H28JUsGTXMKVvrKR4S1BVlsC5QWWYyem2V2Lp2UsnniysK/v67MpG3e3S978tnBouc3JyNdkVgKVLrvt4kCfdhwAqoNVs7b2iySTIwmy6hiHnHU+XH9Ddw4USaV2ZbhB9jhLXm2C1phUuKYms5we9GNGh0rJBubbNWuakzpKQdxLilkgjqj \\n\"
+      },
+      \"crontab\": [],
+      \"infected\": false,
+      \"locked\": false,
+      \"willBeDeleted\": false
+    },
+    \"serviceId\": \"590887c9719fca7d7243e9fa\",
+    \"documentRoot\": \"ac-208112.ru/www\",
+    \"domains\": [
+      {
+        \"@type\": \"Domain\",
+        \"id\": \"5ac4a28837c47a00072b934f\",
+        \"name\": \"ac-208112.ru\",
+        \"accountId\": \"208112\",
+        \"switchedOn\": false,
+        \"person\": null,
+        \"sslCertificate\": null,
+        \"regSpec\": null,
+        \"dnsResourceRecords\": [
+          {
+            \"@type\": \"DNSResourceRecord\",
+            \"id\": null,
+            \"name\": \"ac-208112.ru\",
+            \"accountId\": null,
+            \"switchedOn\": true,
+            \"domainId\": 10893716,
+            \"recordId\": 16793323,
+            \"ownerName\": \"ac-208112.ru\",
+            \"ttl\": 3600,
+            \"data\": \"ns.majordomo.ru. support.majordomo.ru. 2004032900 3600 900 3600000 3600\",
+            \"prio\": null,
+            \"rrClass\": \"IN\",
+            \"rrType\": \"SOA\",
+            \"locked\": false,
+            \"willBeDeleted\": false
+          },
+          {
+            \"@type\": \"DNSResourceRecord\",
+            \"id\": null,
+            \"name\": \"ac-208112.ru\",
+            \"accountId\": null,
+            \"switchedOn\": true,
+            \"domainId\": 10893716,
+            \"recordId\": 16793324,
+            \"ownerName\": \"ac-208112.ru\",
+            \"ttl\": 3600,
+            \"data\": \"ns.majordomo.ru\",
+            \"prio\": null,
+            \"rrClass\": \"IN\",
+            \"rrType\": \"NS\",
+            \"locked\": false,
+            \"willBeDeleted\": false
+          },
+          {
+            \"@type\": \"DNSResourceRecord\",
+            \"id\": null,
+            \"name\": \"ac-208112.ru\",
+            \"accountId\": null,
+            \"switchedOn\": true,
+            \"domainId\": 10893716,
+            \"recordId\": 16793325,
+            \"ownerName\": \"ac-208112.ru\",
+            \"ttl\": 3600,
+            \"data\": \"ns2.majordomo.ru\",
+            \"prio\": null,
+            \"rrClass\": \"IN\",
+            \"rrType\": \"NS\",
+            \"locked\": false,
+            \"willBeDeleted\": false
+          },
+          {
+            \"@type\": \"DNSResourceRecord\",
+            \"id\": null,
+            \"name\": \"ac-208112.ru\",
+            \"accountId\": null,
+            \"switchedOn\": true,
+            \"domainId\": 10893716,
+            \"recordId\": 16793326,
+            \"ownerName\": \"ac-208112.ru\",
+            \"ttl\": 3600,
+            \"data\": \"ns3.majordomo.ru\",
+            \"prio\": null,
+            \"rrClass\": \"IN\",
+            \"rrType\": \"NS\",
+            \"locked\": false,
+            \"willBeDeleted\": false
+          },
+          {
+            \"@type\": \"DNSResourceRecord\",
+            \"id\": null,
+            \"name\": \"ac-208112.ru\",
+            \"accountId\": null,
+            \"switchedOn\": true,
+            \"domainId\": 10893716,
+            \"recordId\": 16793327,
+            \"ownerName\": \"ac-208112.ru\",
+            \"ttl\": 3600,
+            \"data\": \"185.84.108.20\",
+            \"prio\": null,
+            \"rrClass\": \"IN\",
+            \"rrType\": \"A\",
+            \"locked\": false,
+            \"willBeDeleted\": false
+          },
+          {
+            \"@type\": \"DNSResourceRecord\",
+            \"id\": null,
+            \"name\": \"ac-208112.ru\",
+            \"accountId\": null,
+            \"switchedOn\": true,
+            \"domainId\": 10893716,
+            \"recordId\": 16793328,
+            \"ownerName\": \"*.ac-208112.ru\",
+            \"ttl\": 3600,
+            \"data\": \"185.84.108.20\",
+            \"prio\": null,
+            \"rrClass\": \"IN\",
+            \"rrType\": \"A\",
+            \"locked\": false,
+            \"willBeDeleted\": false
+          },
+          {
+            \"@type\": \"DNSResourceRecord\",
+            \"id\": null,
+            \"name\": \"ac-208112.ru\",
+            \"accountId\": null,
+            \"switchedOn\": true,
+            \"domainId\": 10893716,
+            \"recordId\": 16793329,
+            \"ownerName\": \"ac-208112.ru\",
+            \"ttl\": 3600,
+            \"data\": \"mmxs.majordomo.ru\",
+            \"prio\": 10,
+            \"rrClass\": \"IN\",
+            \"rrType\": \"MX\",
+            \"locked\": false,
+            \"willBeDeleted\": false
+          },
+          {
+            \"@type\": \"DNSResourceRecord\",
+            \"id\": null,
+            \"name\": \"ac-208112.ru\",
+            \"accountId\": null,
+            \"switchedOn\": true,
+            \"domainId\": 10893716,
+            \"recordId\": 16793330,
+            \"ownerName\": \"smtp.ac-208112.ru\",
+            \"ttl\": 3600,
+            \"data\": \"smtp.majordomo.ru\",
+            \"prio\": null,
+            \"rrClass\": \"IN\",
+            \"rrType\": \"CNAME\",
+            \"locked\": false,
+            \"willBeDeleted\": false
+          },
+          {
+            \"@type\": \"DNSResourceRecord\",
+            \"id\": null,
+            \"name\": \"ac-208112.ru\",
+            \"accountId\": null,
+            \"switchedOn\": true,
+            \"domainId\": 10893716,
+            \"recordId\": 16793331,
+            \"ownerName\": \"pop3.ac-208112.ru\",
+            \"ttl\": 3600,
+            \"data\": \"pop3.majordomo.ru\",
+            \"prio\": null,
+            \"rrClass\": \"IN\",
+            \"rrType\": \"CNAME\",
+            \"locked\": false,
+            \"willBeDeleted\": false
+          },
+          {
+            \"@type\": \"DNSResourceRecord\",
+            \"id\": null,
+            \"name\": \"ac-208112.ru\",
+            \"accountId\": null,
+            \"switchedOn\": true,
+            \"domainId\": 10893716,
+            \"recordId\": 16793332,
+            \"ownerName\": \"mail.ac-208112.ru\",
+            \"ttl\": 3600,
+            \"data\": \"mail.majordomo.ru\",
+            \"prio\": null,
+            \"rrClass\": \"IN\",
+            \"rrType\": \"CNAME\",
+            \"locked\": false,
+            \"willBeDeleted\": false
+          }
+        ],
+        \"autoRenew\": false,
+        \"parentDomainId\": null,
+        \"synced\": [2018, 4, 4, 14, 4, 11, 20000000],
+        \"locked\": false,
+        \"willBeDeleted\": false
+      }
+    ],
+    \"charSet\": \"UTF8\",
+    \"ssiEnabled\": false,
+    \"ssiFileExtensions\": [\"shtml\", \"shtm\"],
+    \"cgiEnabled\": false,
+    \"cgiFileExtensions\": [\"cgi\" ,\"pl\"],
+    \"scriptAlias\": \"ac-208112.ru/www/cgi-bin\",
+    \"ddosProtection\": false,
+    \"autoSubDomain\": false,
+    \"accessByOldHttpVersion\": false,
+    \"staticFileExtensions\": [
+      \"ogg\", \"mp3\", \"avi\", \"mpeg\", 
+      \"js\", \"css\", \"swf\", 
+      \"bz2\", \"gz\", \"rar\", \"zip\", 
+      \"gif\", \"jpg\", \"png\", \"svg\"
+    ],
+    \"customUserConf\": \"\",
+    \"indexFileList\": [\"index.php\", \"index.html\"],
+    \"accessLogEnabled\": true,
+    \"errorLogEnabled\": true,
+    \"followSymLinks\": true,
+    \"multiViews\": false,
+    \"allowUrlFopen\": true,
+    \"mbstringFuncOverload\": 0,
+    \"displayErrors\": null,
+    \"sessionUseTransSid\": null,
+    \"maxInputVars\": null,
+    \"opcacheMaxAcceleratedFiles\": null,
+    \"realpathCacheSize\": null,
+    \"requestOrder\": null,
+    \"allowUrlInclude\": null,
+    \"opcacheRevalidateFreq\": null,
+    \"memoryLimit\": null,
+    \"mbstringInternalEncoding\": null,
+    \"locked\": false,
+    \"willBeDeleted\": false
+  }
+]")
+             (_ (error "Nonexistent account: " account)))))
+        (string=? (with-output-to-string
+                    (lambda ()
+                      (gms-account "unix" "ac_208112")))
+                  (string-append "quota: 0.48/10.0 GB\n"
+                                 "server_id: web_server_134\n"
+                                 "home_dir: /home/u7590\n\n"))))
 
 (test-end "account")

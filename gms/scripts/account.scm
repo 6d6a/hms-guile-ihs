@@ -32,7 +32,9 @@
   #:export (account->scm
             gms-account
             serialize-account
-            account-websites))
+
+            account-websites
+            account-websites->scm))
 
 (define (show-help)
   (display (G_ "Usage: gms account [OPTION ...] ACTION [ARG ...]
@@ -108,7 +110,10 @@ Fetch data about user.\n"))
                           #:headers `((content-type . (application/json))
                                       (Authorization . ,(format #f "Bearer ~a" (auth))))
                           #:keep-alive? #t)))
-    (map hash-table->alist (json-string->scm (utf8->string body)))))
+    (utf8->string body)))
+
+(define (account-websites->scm account)
+  (map hash-table->alist (json-string->scm (account-websites account))))
 
 (define (process-command command args opts)
   "Process COMMAND, one of the 'gms server' sub-commands.  ARGS is its
@@ -120,7 +125,7 @@ argument list and OPTS is the option alist."
 
   (define (serialize-website-args procedure)
     (for-each (lambda (account)
-                (procedure (first (account-websites account))))
+                (procedure (first (account-websites->scm account))))
               args))
 
   (define (serialize-websites-args procedure)
