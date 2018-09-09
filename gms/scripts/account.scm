@@ -31,7 +31,8 @@
   #:use-module (web client)
   #:export (account->scm
             gms-account
-            serialize-account))
+            serialize-account
+            account-websites))
 
 (define (show-help)
   (display (G_ "Usage: gms account [OPTION ...] ACTION [ARG ...]
