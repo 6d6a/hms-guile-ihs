@@ -1,5 +1,5 @@
-AC_INIT([Guile-HMS], [0.0.1], [go.wigust@gmail.com], [guile-hms],
-  [https://hms-billing.majordomo.ru/])
+AC_INIT([Guile-GMS], [0.0.1], [go.wigust@gmail.com], [guile-gms],
+  [https://gms-billing.majordomo.ru/])
 
 PKG_CHECK_MODULES([GUILE], [guile-2.2])
 GUILE_PKG([2.2])

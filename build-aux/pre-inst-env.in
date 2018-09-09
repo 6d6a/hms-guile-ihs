@@ -2,25 +2,25 @@
 
 # Copyright © 2018 Oleg Pykhalov <go.wigust@gmail.com>
 #
-# This file is part of Guile HMS.
+# This file is part of Guile GMS.
 #
-# Guile HMS is free software; you can redistribute it and/or modify it
+# Guile GMS is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 3 of the License, or
 # (at your option) any later version.
 #
-# Guile HMS is distributed in the hope that it will be useful, but
+# Guile GMS is distributed in the hope that it will be useful, but
 # WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 # General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with Guile HMS.  If not, see <http://www.gnu.org/licenses/>.
+# along with Guile GMS.  If not, see <http://www.gnu.org/licenses/>.
 
 # Usage: ./pre-inst-env COMMAND ARG...
 #
 # Run COMMAND in a pre-installation environment.  Typical use is
-# "./pre-inst-env hms".
+# "./pre-inst-env gms".
 
 # By default we may end up with absolute directory names that contain '..',
 # which get into $GUILE_LOAD_PATH, leading to '..' in the module file names

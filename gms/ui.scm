@@ -1,22 +1,22 @@
-;;; Guile HMS --- HMS command-line interface.
+;;; Guile GMS --- GMS command-line interface.
 ;;; Copyright © 2018 Oleg Pykhalov <go.wigust@gmail.com>
 ;;;
-;;; This file is part of Guile HMS.
+;;; This file is part of Guile GMS.
 ;;;
-;;; Guile HMS is free software; you can redistribute it and/or modify
+;;; Guile GMS is free software; you can redistribute it and/or modify
 ;;; it under the terms of the GNU General Public License as published
 ;;; by the Free Software Foundation; either version 3 of the License,
 ;;; or (at your option) any later version.
 ;;;
-;;; Guile HMS is distributed in the hope that it will be useful, but
+;;; Guile GMS is distributed in the hope that it will be useful, but
 ;;; WITHOUT ANY WARRANTY; without even the implied warranty of
 ;;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ;;; GNU General Public License for more details.
 ;;;
 ;;; You should have received a copy of the GNU General Public License
-;;; along with Guile HMS.  If not, see <http://www.gnu.org/licenses/>.
+;;; along with Guile GMS.  If not, see <http://www.gnu.org/licenses/>.
 
-(define-module (hms ui)
+(define-module (gms ui)
   #:autoload   (ice-9 ftw)  (scandir)
   #:use-module (ice-9 match)
   #:use-module (json)
@@ -27,15 +27,15 @@
   #:use-module (srfi srfi-37)
   #:use-module (web client)
   #:use-module (web response)
-  #:export (hms-main
+  #:export (gms-main
             auth
             hash-table->alist))
 
-(define hms-user
-  (getenv "HMS_USER"))
+(define gms-user
+  (getenv "GMS_USER"))
 
-(define hms-password
-  (getenv "HMS_PASS"))
+(define gms-password
+  (getenv "GMS_PASS"))
 
 ;; Code from (guix import utils)
 (define (hash-table->alist table)
@@ -53,7 +53,7 @@
         (pair pair))
        (hash-map->list cons table)))
 
-(define* (auth #:key (user hms-user) (pass hms-password))
+(define* (auth #:key (user gms-user) (pass gms-password))
   (letrec-syntax ((option (syntax-rules ()
                             ((_ key value)
                              (if value
@@ -84,16 +84,16 @@
 ;;; ui
 ;;;
 
-(define (show-hms-usage)
+(define (show-gms-usage)
   (format (current-error-port)
-          "Try `hms --help' for more information.~%")
+          "Try `gms --help' for more information.~%")
   (exit 1))
 
 (define (command-files)
-  "Return the list of source files that define HMS sub-commands."
+  "Return the list of source files that define GMS sub-commands."
   (define directory
-    (and=> (search-path %load-path "hms.scm")
-           (compose (cut string-append <> "/hms/scripts")
+    (and=> (search-path %load-path "gms.scm")
+           (compose (cut string-append <> "/gms/scripts")
                     dirname)))
 
   (define dot-scm?
@@ -104,15 +104,15 @@
       '()))
 
 (define (commands)
-  "Return the list of HMS command names."
+  "Return the list of GMS command names."
   (map (compose (cut string-drop-right <> 4)
                 basename)
        (command-files)))
 
-(define (show-hms-help)
+(define (show-gms-help)
   (format
     #t
-    "Usage: hms COMMAND ARGS...\nRun COMMAND with ARGS.\n")
+    "Usage: gms COMMAND ARGS...\nRun COMMAND with ARGS.\n")
   (newline)
   (format
     #t
@@ -127,20 +127,20 @@
   ;; Name of the command-line program currently executing, or #f.
   (make-parameter #f))
 
-(define (run-hms-command command . args)
+(define (run-gms-command command . args)
   "Run COMMAND with the given ARGS.  Report an error when COMMAND is not
 found."
   (define module
     (catch 'misc-error
       (lambda ()
-        (resolve-interface `(hms scripts ,command)))
+        (resolve-interface `(gms scripts ,command)))
       (lambda -
         (format (current-error-port)
-                "hms: ~a: command not found~%" command)
-        (show-hms-usage))))
+                "gms: ~a: command not found~%" command)
+        (show-gms-usage))))
 
   (let ((command-main (module-ref module
-                                  (symbol-append 'hms- command))))
+                                  (symbol-append 'gms- command))))
     (parameterize ((program-name command))
       ;; Disable canonicalization so we don't don't stat unreasonably.
       (with-fluids ((%file-port-name-canonicalization #f))
@@ -153,23 +153,23 @@ found."
             ;; REPL) to run things like profiling hooks upon completion.
             (run-hook exit-hook)))))))
 
-(define (run-hms . args)
-  "Run the 'hms' command defined by command line ARGS."
+(define (run-gms . args)
+  "Run the 'gms' command defined by command line ARGS."
   ;; The default %LOAD-EXTENSIONS includes the empty string, which doubles the
   ;; number of 'stat' calls per entry in %LOAD-PATH.  Shamelessly remove it.
   (set! %load-extensions '(".scm"))
 
   (match args
     (()
-     (format (current-error-port) "hms: missing command name~%")
-     (show-hms-usage))
+     (format (current-error-port) "gms: missing command name~%")
+     (show-gms-usage))
     ((or ("-h") ("--help"))
-     (show-hms-help))
+     (show-gms-help))
     ((command args ...)
-     (apply run-hms-command (string->symbol command) args))))
+     (apply run-gms-command (string->symbol command) args))))
 
-(define (hms-main arg0 . args)
-  (apply run-hms args))
+(define (gms-main arg0 . args)
+  (apply run-gms args))
 
 
 ;;;
@@ -177,4 +177,4 @@ found."
 ;;;
 
 (define* (main #:optional (args (command-line)))
-  (exit (apply hms-main args)))
+  (exit (apply gms-main args)))

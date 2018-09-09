@@ -1,25 +1,25 @@
-;;; Guile HMS --- HMS command-line interface.
+;;; Guile GMS --- GMS command-line interface.
 ;;; Copyright © 2018 Oleg Pykhalov <go.wigust@gmail.com>
 ;;;
-;;; This file is part of Guile HMS.
+;;; This file is part of Guile GMS.
 ;;;
-;;; Guile HMS is free software; you can redistribute it and/or modify
+;;; Guile GMS is free software; you can redistribute it and/or modify
 ;;; it under the terms of the GNU General Public License as published
 ;;; by the Free Software Foundation; either version 3 of the License,
 ;;; or (at your option) any later version.
 ;;;
-;;; Guile HMS is distributed in the hope that it will be useful, but
+;;; Guile GMS is distributed in the hope that it will be useful, but
 ;;; WITHOUT ANY WARRANTY; without even the implied warranty of
 ;;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ;;; GNU General Public License for more details.
 ;;;
 ;;; You should have received a copy of the GNU General Public License
-;;; along with Guile HMS.  If not, see <http://www.gnu.org/licenses/>.
+;;; along with Guile GMS.  If not, see <http://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 
 ;; This file contains Guix package for development version of
-;; Guile HMS.  To build or install, run:
+;; Guile GMS.  To build or install, run:
 ;;
 ;;   guix build --file=guix.scm
 ;;   guix package --install-from-file=guix.scm
@@ -52,10 +52,10 @@ newspace."
 (define (current-commit)
   (git-output "log" "-n" "1" "--pretty=format:%H"))
 
-(define guile-hms
+(define guile-gms
   (let ((commit (current-commit)))
     (package
-      (name "guile-hms")
+      (name "guile-gms")
       (version (string-append "0.0.1" "-" (string-take commit 7)))
       (source (local-file %source-dir
                           #:recursive? #t
@@ -74,6 +74,6 @@ newspace."
        "This package provides a Guile interface to Majordomo API.")
       (license license:gpl3+))))
 
-guile-hms
+guile-gms
 
 ;;; guix.scm ends here

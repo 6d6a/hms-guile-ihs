@@ -1,27 +1,27 @@
-;;; Guile HMS --- HMS command-line interface.
+;;; Guile GMS --- GMS command-line interface.
 ;;; Copyright © 2018 Oleg Pykhalov <go.wigust@gmail.com>
 ;;;
-;;; This file is part of Guile HMS.
+;;; This file is part of Guile GMS.
 ;;;
-;;; Guile HMS is free software; you can redistribute it and/or modify it under
+;;; Guile GMS is free software; you can redistribute it and/or modify it under
 ;;; the terms of the GNU General Public License as published by the Free
 ;;; Software Foundation; either version 3 of the License, or (at your option)
 ;;; any later version.
 ;;;
-;;; Guile HMS is distributed in the hope that it will be useful, but WITHOUT
+;;; Guile GMS is distributed in the hope that it will be useful, but WITHOUT
 ;;; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
 ;;; FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
 ;;; more details.
 ;;;
 ;;; You should have received a copy of the GNU General Public License along
-;;; with Guile HMS.  If not, see <http://www.gnu.org/licenses/>.
+;;; with Guile GMS.  If not, see <http://www.gnu.org/licenses/>.
 
-(define-module (hms scripts search)
+(define-module (gms scripts search)
   #:use-module ((guix scripts) #:select (parse-command-line))
   #:use-module ((guix ui) #:select (G_ leave))
-  #:use-module (hms scripts)
-  #:use-module (hms scripts account)
-  #:use-module (hms ui)
+  #:use-module (gms scripts)
+  #:use-module (gms scripts account)
+  #:use-module (gms ui)
   #:use-module (json)
   #:use-module (rnrs bytevectors)
   #:use-module (ice-9 match)
@@ -29,12 +29,12 @@
   #:use-module (srfi srfi-11)
   #:use-module (srfi srfi-37)
   #:use-module (web client)
-  #:export (hms-search
+  #:export (gms-search
             search-domain
             search-account))
 
 (define (show-help)
-  (display (G_ "Usage: hms server [OPTION ...] ACTION [ARG ...] [FILE]
+  (display (G_ "Usage: gms server [OPTION ...] ACTION [ARG ...] [FILE]
 Fetch data about server.\n"))
   (newline)
   (display (G_ "The valid values for ACTION are:\n"))
@@ -99,7 +99,7 @@ Fetch data about server.\n"))
                           #:keep-alive? #t)))
     (hash-table->alist (json-string->scm (utf8->string body)))))
 
-(define (hms-search . args)
+(define (gms-search . args)
   ;; TODO: with-error-handling
   (for-each (lambda (arg)
               (cond ((string-prefix? "ac_" (string-downcase arg))

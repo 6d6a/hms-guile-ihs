@@ -1,5 +1,5 @@
-(define-module (hms scripts)
-  #:use-module (hms ui)
+(define-module (gms scripts)
+  #:use-module (gms ui)
   #:use-module (ice-9 match)
   #:use-module (ice-9 pretty-print)
   #:use-module (srfi srfi-1)
