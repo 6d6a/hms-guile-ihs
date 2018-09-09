@@ -10,63 +10,130 @@
 ;;;
 ;;; Guile HMS is distributed in the hope that it will be useful, but
 ;;; WITHOUT ANY WARRANTY; without even the implied warranty of
-;;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-;;; GNU General Public License for more details.
+;;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+;;; General Public License for more details.
 ;;;
 ;;; You should have received a copy of the GNU General Public License
 ;;; along with Guile HMS.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (hms scripts account)
+  #:use-module ((guix scripts) #:select (parse-command-line))
+  #:use-module ((guix ui) #:select (G_ leave))
+  #:use-module (hms scripts)
   #:use-module (hms ui)
-  #:use-module (ice-9 match)
-  #:use-module (ice-9 pretty-print)
-  #:use-module (srfi srfi-1)
-  #:use-module (srfi srfi-11)
-  #:use-module (srfi srfi-26)
-  #:use-module (srfi srfi-37)
-  #:use-module (web client)
   #:use-module (json)
   #:use-module (rnrs bytevectors)
-  #:export (hms-account))
+  #:use-module (srfi srfi-1)
+  #:use-module (srfi srfi-11)
+  #:use-module (srfi srfi-37)
+  #:use-module (web client)
+  #:export (account->scm
+            hms-account))
+
+(define (show-help)
+  (display (G_ "Usage: hms account [OPTION ...] ACTION [ARG ...]
+Fetch data about user."))
+  (newline)
+  (display (G_ "The valid values for ACTION are:\n"))
+  (newline)
+  (display (G_ "\
+   service               search for existing service types\n"))
+  (display (G_ "\
+   show                  show user\n"))
+  (newline)
+  (display (G_ "
+  -h, --help             display this help and exit"))
+  ;; TODO: version
+  #;(display (G_ "
+  -V, --version          display version information and exit"))
+  (newline)
+  ;; TODO: show-bug-report-information
+  #;(show-bug-report-information))
+
+(define %options
+  ;; Specifications of the command-line options.
+  (list (option '(#\h "help") #f #f
+                 (lambda args
+                   (show-help)
+                   (exit 0)))))
+
+(define %default-options '())
 
 
 ;;;
 ;;; Entry point.
 ;;;
 
-(define (hms-account . args)
-  (define (serialize-field field)
-    (if (string-prefix? "@" field)
-        (string-drop field (string-length "@"))
-        field))
-  (define (serialize-boolean value)
-    (if value "true" "false"))
-  (define (serialize-quota value)
-    (let ((size (number->string (/ (/ (/ value 1024.0) 1024.0) 1024.0))))
-      (match (string-split size #\.)
-        ((natural decimal)
-         (string-append natural "."
-                        (if (> (string-length decimal) 2)
-                            (string-take decimal 2)
-                            decimal))))))
-  (for-each (lambda (account)
-              (let-values (((response body)
-                            (http-get (string-append "https://api.majordomo.ru/" account "/account")
-                                      #:headers `((content-type . (application/json))
-                                                  (Authorization . ,(format #f "Bearer ~a" (auth))))
-                                      #:keep-alive? #t)))
-                (let ((json (hash-table->alist (json-string->scm (utf8->string body)))))
-                  (format #t "name: ~a~%" (assoc-ref json "name"))
-                  (format #t "active: ~a~%" (serialize-boolean (assoc-ref json "active")))
-                  (format #t "automatic_billing_sending: ~a~%" (serialize-boolean (assoc-ref json "autoBillSending")))
-                  (format #t "notify_days: ~a~%" (serialize-boolean (assoc-ref json "notifyDays")))
-                  (format #t "credit: ~a~%" (serialize-boolean (assoc-ref json "credit")))
-                  #;(let ((services (assoc-ref json "services")))
-                    (pretty-print services)
-                    (format #t "name: ~a~%" (assoc-ref services "name"))
-                    (format #t "cost: ~a rub~%" (assoc-ref services "cost"))
-                    (format #t "enabled: ~a~%" (serialize-boolean (assoc-ref services "enabled")))
-                    (format #t "last_billed: ~a~%" (assoc-ref services "lastBilled")))
-                  (newline))))
-            args))
+(define (parse-sub-command arg result)
+  ;; Parse sub-command ARG and augment RESULT accordingly.
+  (if (assoc-ref result 'action)
+      (alist-cons 'argument arg result)
+      (let ((action (string->symbol arg)))
+        (case action
+          ((show service)
+           (alist-cons 'action action result))
+          (else (leave (G_ "~a: unknown action~%") action))))))
 
+(define (fetch-account account)
+  (let-values (((response body)
+                (http-get (string-append "https://api.majordomo.ru/" account "/account")
+                          #:headers `((content-type . (application/json))
+                                      (Authorization . ,(format #f "Bearer ~a" (auth))))
+                          #:keep-alive? #t)))
+    (utf8->string body)))
+
+(define (account->scm account)
+  (hash-table->alist (json-string->scm (fetch-account account))))
+
+(define (process-command command args opts)
+  "Process COMMAND, one of the 'hms server' sub-commands.  ARGS is its
+argument list and OPTS is the option alist."
+  (define (serialize-args procedure)
+    (for-each (lambda (account)
+                (procedure (account->scm account)))
+              args))
+
+  (case command
+    ((show)
+     (serialize-args
+      (lambda (user)
+        (format #t "name: ~a~%"
+                (assoc-ref user "name"))
+        (format #t "active: ~a~%"
+                (serialize-boolean
+                 (assoc-ref user "active")))
+        (format #t "automatic_billing_sending: ~a~%"
+                (serialize-boolean
+                 (assoc-ref user "autoBillSending")))
+        (format #t "notify_days: ~a~%"
+                (serialize-boolean
+                 (assoc-ref user "notifyDays")))
+        (format #t "credit: ~a~%"
+                (serialize-boolean
+                 (assoc-ref user "credit")))
+        (newline))))
+
+    ((service)
+     (serialize-args
+      (lambda (user)
+        (for-each (lambda (service)
+                    (format #t "name: ~a~%"
+                            (assoc-ref service "name"))
+                    (format #t "cost: ~a rub~%"
+                            (assoc-ref service "cost"))
+                    (format #t "enabled: ~a~%"
+                            (serialize-boolean
+                             (assoc-ref service "enabled")))
+                    (format #t "last_billed: ~a~%"
+                            (assoc-ref service "lastBilled")))
+                  (assoc-ref user "services")))))))
+
+(define (hms-account . args)
+  ;; TODO: with-error-handling
+  (let* ((opts (parse-command-line args %options
+                                   (list %default-options)
+                                   #:argument-handler
+                                   parse-sub-command))
+         (args (option-arguments opts))
+         (command (assoc-ref opts 'action)))
+    (process-command command args opts)))
