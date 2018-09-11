@@ -27,9 +27,11 @@
 ;;; Code:
 
 (use-modules (gnu packages autotools)
+             (gnu packages gnupg)
              (gnu packages guile)
              (gnu packages package-management)
              (gnu packages pkg-config)
+             (gnu packages tls)
              (guix build utils)
              (guix build-system gnu)
              (guix gexp)
@@ -62,12 +64,56 @@ newspace."
                           #:recursive? #t
                           #:select? (git-predicate %source-dir)))
       (build-system gnu-build-system)
+      (arguments
+       `(#:modules ((guix build gnu-build-system)
+                    (guix build utils)
+                    (srfi srfi-26)
+                    (ice-9 popen)
+                    (ice-9 rdelim))
+          #:phases
+         (modify-phases %standard-phases
+           (add-after 'install 'wrap-program
+             (lambda* (#:key inputs outputs #:allow-other-keys)
+               ;; Make sure the 'guix' command finds GnuTLS,
+               ;; Guile-JSON, and Guile-Git automatically.
+               (let* ((out    (assoc-ref outputs "out"))
+                      (guile  (assoc-ref inputs "guile"))
+                      (gcrypt (assoc-ref inputs "guile-gcrypt"))
+                      (gnutls (assoc-ref inputs "gnutls"))
+                      (guix   (assoc-ref inputs "guix"))
+                      (json   (assoc-ref inputs "guile-json"))
+                      (deps   (list gcrypt gnutls guix json out))
+                      (effective
+                       (read-line
+                        (open-pipe* OPEN_READ
+                                    (string-append guile "/bin/guile")
+                                    "-c" "(display (effective-version))")))
+                      (path   (string-join
+                               (map (cut string-append <>
+                                         "/share/guile/site/"
+                                         effective)
+                                    deps)
+                               ":"))
+                      (gopath (string-join
+                               (map (cut string-append <>
+                                         "/lib/guile/" effective
+                                         "/site-ccache")
+                                    deps)
+                               ":")))
+
+                 (wrap-program (string-append out "/bin/gms")
+                   `("GUILE_LOAD_PATH" ":" prefix (,path))
+                   `("GUILE_LOAD_COMPILED_PATH" ":" prefix (,gopath)))
+
+                 #t))))))
       (native-inputs
        `(("autoconf" ,autoconf)
          ("automake" ,automake)
          ("pkg-config" ,pkg-config)))
       (inputs
-       `(("guile" ,guile-2.2)
+       `(("gnutls" ,gnutls)
+         ("guile" ,guile-2.2)
+         ("guile-gcrypt" ,guile-gcrypt)
          ("guile-json" ,guile-json)
          ("guix" ,guix)))
       (home-page "https://majordomo.ru/")
