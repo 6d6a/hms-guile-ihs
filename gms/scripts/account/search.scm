@@ -16,7 +16,7 @@
 ;;; You should have received a copy of the GNU General Public License along
 ;;; with Guile GMS.  If not, see <http://www.gnu.org/licenses/>.
 
-(define-module (gms scripts search)
+(define-module (gms scripts account search)
   #:use-module ((guix scripts) #:select (parse-command-line))
   #:use-module ((guix ui) #:select (G_ leave))
   #:use-module (guix import utils)
@@ -30,7 +30,7 @@
   #:use-module (srfi srfi-11)
   #:use-module (srfi srfi-37)
   #:use-module (web client)
-  #:export (gms-search
+  #:export (gms-account-search
             search-domain
             search-account
             search-owner))
@@ -127,7 +127,7 @@ Fetch data about server.\n"))
   (format #t "created: ~a~%" (assoc-ref account "created"))
   (format #t "id: ~a~%" (assoc-ref account "clientId")))
 
-(define (gms-search . args)
+(define (gms-account-search . args)
   ;; TODO: with-error-handling
   (for-each (lambda (arg)
               (cond ((string-prefix? "ac_" (string-downcase arg))
@@ -139,22 +139,9 @@ Fetch data about server.\n"))
                      (map (lambda (owner)
                             (serialize-owner owner)
                             (newline))
-                          (assoc-ref (owner->scm arg) "content"))
-                     #;(when detail?
-                       (match account
-                         ((account)
-                          (for-each (lambda (account)
-                                      (format #t "created: ~a~%" (assoc-ref account "created"))
-                                      (newline))
-                                    (assoc-ref (search-account (serialize-account account)) "content"))))))
+                          (assoc-ref (owner->scm arg) "content")))
                     (else (for-each (lambda (domain)
                                       (serialize-domain domain)
                                       (newline))
                                     (domain->scm arg)))))
-            args)
-
-  ;; TODO: handle ‘detail’ argument
-  #;(match (let ((var args))
-           ((@@ (ice-9 pretty-print) pretty-print) var)
-           var)
-    ((detail? args ...))))
+            args))

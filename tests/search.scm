@@ -20,7 +20,7 @@
   #:use-module (guix tests)
   #:use-module (gms scripts)
   #:use-module (gms scripts account)
-  #:use-module (gms scripts search)
+  #:use-module (gms scripts account search)
   #:use-module (ice-9 match)
   #:use-module (srfi srfi-64))
 
@@ -846,14 +846,14 @@
 (test-begin "search")
 
 (test-assert "gms-search-owner"
-  (mock ((gms scripts search) search-owner
+  (mock ((gms scripts account search) search-owner
          (lambda (owner)
            (match owner
              ("go.wigust@gmail.com" test-search-owner-json)
              (_ (error "Nonexistent owner: " owner)))))
         (string=? (with-output-to-string
                         (lambda ()
-                          (gms-search "go.wigust@gmail.com")))
+                          (gms-account-search "go.wigust@gmail.com")))
                       "\
 id: 5ac493018273dc00070a67f1
 account: 208112
@@ -863,14 +863,14 @@ type: INDIVIDUAL
 ")))
 
 (test-assert "gms-search-account"
-  (mock ((gms scripts search) search-account
+  (mock ((gms scripts account search) search-account
          (lambda (account)
            (match (serialize-account account)
              ("208112" test-search-account-json)
              (_ (error "Nonexistent account: " account)))))
         (string=? (with-output-to-string
                     (lambda ()
-                      (gms-search "ac_208112")))
+                      (gms-account-search "ac_208112")))
                       "\
 created: 2018-04-04 11:55:29
 id: 208112
@@ -878,14 +878,14 @@ id: 208112
 ")))
 
 (test-assert "gms-search-domain"
-  (mock ((gms scripts search) search-domain
+  (mock ((gms scripts account search) search-domain
          (lambda (domain)
            (match domain
              ("ac-208112.ru" test-search-domain-json)
              (_ (error "Nonexistent domain: " domain)))))
         (string=? (with-output-to-string
                     (lambda ()
-                      (gms-search "ac-208112.ru")))
+                      (gms-account-search "ac-208112.ru")))
                       "\
 name: ac-208112.ru
 id: 5ac4a28837c47a00072b934f

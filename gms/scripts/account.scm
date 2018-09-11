@@ -21,7 +21,6 @@
   #:use-module ((guix ui) #:select (G_ leave))
   #:use-module (guix import utils)
   #:use-module (gms scripts)
-  #:use-module (gms scripts search)
   #:use-module (gms ui)
   #:use-module (json)
   #:use-module (rnrs bytevectors)
@@ -81,7 +80,7 @@ Fetch data about user.\n"))
       (alist-cons 'argument arg result)
       (let ((action (string->symbol arg)))
         (case action
-          ((domain search service show unix website)
+          ((domain history search service show unix website)
            (alist-cons 'action action result))
           (else (leave (G_ "~a: unknown action~%") action))))))
 
@@ -116,6 +115,12 @@ Fetch data about user.\n"))
 (define (account-websites->scm account)
   (map hash-table->alist (json-string->scm (account-websites account))))
 
+(define (resolve-subcommand name)
+  (let ((module (resolve-interface
+                 `(gms scripts account ,(string->symbol name))))
+        (proc (string->symbol (string-append "gms-account-" name))))
+    (module-ref module proc)))
+
 (define (process-command command args opts)
   "Process COMMAND, one of the 'gms server' sub-commands.  ARGS is its
 argument list and OPTS is the option alist."
@@ -134,13 +139,10 @@ argument list and OPTS is the option alist."
                 (for-each procedure (account-websites->scm account)))
               args))
 
-  (define (serialize-search-user-args procedure)
-    (for-each (lambda (account)
-                (for-each procedure
-                          (assoc-ref (search-account account) "content")))
-              args))
-
   (case command
+    ((history)
+     (apply (resolve-subcommand "history") args))
+
     ((show)
      (serialize-args
       (lambda (user)
@@ -157,11 +159,7 @@ argument list and OPTS is the option alist."
         (newline))))
 
     ((search)
-     (serialize-search-user-args
-      (lambda (account)
-        (format #t "created: ~a~%" (assoc-ref account "created"))
-        (format #t "id: ~a~%" (assoc-ref account "clientId"))
-        (newline))))
+     (apply (resolve-subcommand "search") args))
 
     ((service)
      (serialize-args

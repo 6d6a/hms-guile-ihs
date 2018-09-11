@@ -16,12 +16,11 @@
 ;;; You should have received a copy of the GNU General Public License along
 ;;; with Guile GMS.  If not, see <http://www.gnu.org/licenses/>.
 
-(define-module (gms scripts history)
+(define-module (gms scripts account history)
   #:use-module ((guix scripts) #:select (parse-command-line))
   #:use-module ((guix ui) #:select (G_ leave))
   #:use-module (guix import utils)
   #:use-module (gms scripts)
-  #:use-module (gms scripts search)
   #:use-module (gms ui)
   #:use-module (json)
   #:use-module (rnrs bytevectors)
@@ -30,7 +29,7 @@
   #:use-module (srfi srfi-11)
   #:use-module (srfi srfi-37)
   #:use-module (web client)
-  #:export (gms-history))
+  #:export (gms-account-history))
 
 (define (show-help)
   (display (G_ "Usage: gms history [OPTION ...] ACTION [ARG ...]
@@ -77,7 +76,7 @@ Fetch history about a user.\n"))
   (hash-table->alist (json-string->scm (fetch-history #:account account
                                                       #:page page))))
 
-(define (gms-history . args)
+(define (gms-account-history . args)
   ;; TODO: with-error-handling
   (let* ((history (history->scm #:account (car args)))
          (pages (assoc-ref history "totalPages")))
