@@ -26,17 +26,18 @@
 
 ;;; Code:
 
-(use-modules ((guix licenses) #:prefix license:)
+(use-modules (gnu packages autotools)
+             (gnu packages guile)
+             (gnu packages package-management)
+             (gnu packages pkg-config)
              (guix build utils)
              (guix build-system gnu)
              (guix gexp)
              (guix git-download)
              (guix packages)
-             (gnu packages autotools)
-             (gnu packages guile)
-             (gnu packages pkg-config)
              (ice-9 popen)
-             (ice-9 rdelim))
+             (ice-9 rdelim)
+             ((guix licenses) #:prefix license:))
 
 (define %source-dir (dirname (current-filename)))
 
@@ -67,7 +68,8 @@ newspace."
          ("pkg-config" ,pkg-config)))
       (inputs
        `(("guile" ,guile-2.2)
-         ("guile-json" ,guile-json)))
+         ("guile-json" ,guile-json)
+         ("guix" ,guix)))
       (home-page "https://majordomo.ru/")
       (synopsis "Guile interface to Majordomo API")
       (description
