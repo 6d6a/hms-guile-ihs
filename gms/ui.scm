@@ -28,8 +28,8 @@
   #:use-module (srfi srfi-37)
   #:use-module (web client)
   #:use-module (web response)
-  #:export (gms-main
-            auth))
+  #:export (auth
+            gms-main))
 
 (define gms-user
   (getenv "GMS_USER"))
