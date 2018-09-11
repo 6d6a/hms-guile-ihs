@@ -19,6 +19,7 @@
 (define-module (gms scripts server)
   #:use-module ((guix scripts) #:select (parse-command-line))
   #:use-module ((guix ui)  #:select (leave G_))
+  #:use-module (guix import utils)
   #:use-module (gms scripts)
   #:use-module (gms ui)
   #:use-module (json)

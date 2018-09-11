@@ -19,6 +19,7 @@
 (define-module (gms ui)
   #:autoload   (ice-9 ftw)  (scandir)
   #:use-module (ice-9 match)
+  #:use-module (guix import utils)
   #:use-module (json)
   #:use-module (rnrs bytevectors)
   #:use-module (srfi srfi-1)
@@ -28,30 +29,13 @@
   #:use-module (web client)
   #:use-module (web response)
   #:export (gms-main
-            auth
-            hash-table->alist))
+            auth))
 
 (define gms-user
   (getenv "GMS_USER"))
 
 (define gms-password
   (getenv "GMS_PASS"))
-
-;; Code from (guix import utils)
-(define (hash-table->alist table)
-  "Return an alist represenation of TABLE."
-  (map (match-lambda
-        ((key . (lst ...))
-         (cons key
-               (map (lambda (x)
-                      (if (hash-table? x)
-                          (hash-table->alist x)
-                          x))
-                    lst)))
-        ((key . (? hash-table? table))
-         (cons key (hash-table->alist table)))
-        (pair pair))
-       (hash-map->list cons table)))
 
 (define* (auth #:key (user gms-user) (pass gms-password))
   (letrec-syntax ((option (syntax-rules ()
