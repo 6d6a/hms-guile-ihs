@@ -36,8 +36,8 @@ MODULES =					\
   gms/ui.scm					\
   gms/scripts.scm				\
   gms/scripts/account.scm			\
-  gms/scripts/history.scm			\
-  gms/scripts/search.scm			\
+  gms//scripts/account/history.scm			\
+  gms/scripts/account/search.scm			\
   gms/scripts/server.scm
 
 GO_FILES = $(MODULES:%.scm=%.go)
