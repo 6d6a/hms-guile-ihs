@@ -408,7 +408,7 @@ ddos_protection: false
 ")
              (string=? (with-output-to-string
                          (lambda ()
-                           (gms-account "domain" "ac_208112")))
+                           (gms-account "domain" "-n" "ac_208112")))
                        "\
 name: ac-208112.ru
 records: ac-208112.ru 3600 IN SOA ns.majordomo.ru. support.majordomo.ru. 2004032900 3600 900 3600000 3600
