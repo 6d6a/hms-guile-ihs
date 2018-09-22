@@ -46,6 +46,8 @@ Fetch data about user.\n"))
   (display (G_ "\
    domain                show domains on account\n"))
   (display (G_ "\
+   dump                  dump all available information\n"))
+  (display (G_ "\
    service               search for existing service types\n"))
   (display (G_ "\
    show                  show user\n"))
@@ -121,7 +123,7 @@ numbers, etc.) to names.") #f #f
       (alist-cons 'argument arg result)
       (let ((action (string->symbol arg)))
         (case action
-          ((domain history search service show unix website)
+          ((domain dump history search service show unix website)
            (alist-cons 'action action result))
           (else (leave (G_ "~a: unknown action~%") action))))))
 
@@ -181,24 +183,109 @@ argument list and OPTS is the option alist."
                   (for-each procedure (account-websites->scm account)))
                 args))
 
+    (define (format-user user)
+      (format #t "name: ~a~%"
+              (assoc-ref user "name"))
+      (format #t "active: ~a~%"
+              (serialize-boolean (assoc-ref user "active")))
+      (format #t "automatic_billing_sending: ~a~%"
+              (serialize-boolean (assoc-ref user "autoBillSending")))
+      (format #t "notify_days: ~a~%"
+              (serialize-boolean (assoc-ref user "notifyDays")))
+      (format #t "credit: ~a~%"
+              (serialize-boolean (assoc-ref user "credit")))
+      (newline))
+
+    (define (format-service service)
+      (format #t "name: ~a~%"
+              (assoc-ref service "name"))
+      (format #t "cost: ~a rub~%"
+              (assoc-ref service "cost"))
+      (format #t "enabled: ~a~%"
+              (serialize-boolean (assoc-ref service "enabled")))
+      (format #t "last_billed: ~a~%"
+              (assoc-ref service "lastBilled"))
+      (newline))
+
+    (define (format-website website)
+      (format #t "name: ~a~%"
+              (assoc-ref website "name"))
+      (format #t "document_root: ~a~%"
+              (assoc-ref website "documentRoot"))
+      (format #t "auto_sub_domain: ~a~%"
+              (serialize-boolean (assoc-ref website "autoSubDomain")))
+      (format #t "index_file_list: ~a~%"
+              (string-join (sort (assoc-ref website "indexFileList")
+                                 string<)))
+      (format #t "static_file_extensions: ~a~%"
+              (string-join (sort (assoc-ref website "staticFileExtensions")
+                                 string<)))
+      (format #t "cgi_enabled: ~a~%"
+              (serialize-boolean (assoc-ref website "cgiEnabled")))
+      (format #t "cgi_file_extensions: ~a~%"
+              (string-join (assoc-ref website "cgiFileExtensions")))
+      (format #t "infected: ~a~%"
+              (serialize-boolean (assoc-ref website "infected")))
+      (format #t "writable: ~a~%"
+              (serialize-boolean (assoc-ref website "writable")))
+      (format #t "sendmail_allowed: ~a~%"
+              (serialize-boolean (assoc-ref website "sendmailAllowed")))
+      (format #t "ddos_protection: ~a~%"
+              (serialize-boolean (assoc-ref website "ddosProtection")))
+      (newline))
+
+    (define (format-unix account)
+      (let ((unix-account (assoc-ref account "unixAccount")))
+        (format #t "quota: ~a/~a GB~%"
+                (serialize-quota (assoc-ref unix-account "quotaUsed"))
+                (serialize-quota (assoc-ref unix-account "quota")))
+        (format #t "server_id: ~a~%" (assoc-ref unix-account "serverId"))
+        (format #t "home_dir: ~a~%" (assoc-ref unix-account "homeDir"))
+        (newline)))
+
+    (define (format-domain domain)
+      (define (format-record record)
+        (format #t "+ ~a ~a ~a ~a ~a\n"
+                (assoc-ref record "name")
+                (assoc-ref record "ttl")
+                (assoc-ref record "rrClass")
+                (assoc-ref record "rrType")
+                (assoc-ref record "data")))
+
+      (let ((name (assoc-ref domain "name")))
+        (format #t "name: ~a~%" name)
+        (unless resolve? (resolve-domain name)))
+
+      (match (assoc-ref domain "dnsResourceRecords")
+        ((record records ...)
+         (format #t "records: ~a ~a ~a ~a ~a\n"
+                 (assoc-ref record "name")
+                 (assoc-ref record "ttl")
+                 (assoc-ref record "rrClass")
+                 (assoc-ref record "rrType")
+                 (assoc-ref record "data"))
+         (for-each format-record records))
+        (_ '()))
+
+      (newline))
+
     (case command
+      ((dump)
+       (serialize-args format-user)
+       (serialize-args
+        (lambda (user)
+          (for-each format-service (assoc-ref user "services"))))
+       (serialize-websites-args format-website)
+       (serialize-website-args format-unix)
+       (serialize-websites-args
+        (lambda (user)
+          (for-each format-domain (assoc-ref user "domains")))))
+
       ((history)
        (apply (resolve-subcommand "history") args))
 
       ((show)
-       (serialize-args
-        (lambda (user)
-          (format #t "name: ~a~%"
-                  (assoc-ref user "name"))
-          (format #t "active: ~a~%"
-                  (serialize-boolean (assoc-ref user "active")))
-          (format #t "automatic_billing_sending: ~a~%"
-                  (serialize-boolean (assoc-ref user "autoBillSending")))
-          (format #t "notify_days: ~a~%"
-                  (serialize-boolean (assoc-ref user "notifyDays")))
-          (format #t "credit: ~a~%"
-                  (serialize-boolean (assoc-ref user "credit")))
-          (newline))))
+       (serialize-args format-user))
 
       ((search)
        (apply (resolve-subcommand "search") args))
@@ -206,84 +293,18 @@ argument list and OPTS is the option alist."
       ((service)
        (serialize-args
         (lambda (user)
-          (for-each (lambda (service)
-                      (format #t "name: ~a~%"
-                              (assoc-ref service "name"))
-                      (format #t "cost: ~a rub~%"
-                              (assoc-ref service "cost"))
-                      (format #t "enabled: ~a~%"
-                              (serialize-boolean (assoc-ref service "enabled")))
-                      (format #t "last_billed: ~a~%"
-                              (assoc-ref service "lastBilled"))
-                      (newline))
-                    (assoc-ref user "services")))))
+          (for-each format-service (assoc-ref user "services")))))
 
       ((website)
-       (serialize-websites-args
-        (lambda (user)
-          (format #t "name: ~a~%"
-                  (assoc-ref user "name"))
-          (format #t "document_root: ~a~%"
-                  (assoc-ref user "documentRoot"))
-          (format #t "auto_sub_domain: ~a~%"
-                  (serialize-boolean (assoc-ref user "autoSubDomain")))
-          (format #t "index_file_list: ~a~%"
-                  (string-join (sort (assoc-ref user "indexFileList")
-                                     string<)))
-          (format #t "static_file_extensions: ~a~%"
-                  (string-join (sort (assoc-ref user "staticFileExtensions")
-                                     string<)))
-          (format #t "cgi_enabled: ~a~%"
-                  (serialize-boolean (assoc-ref user "cgiEnabled")))
-          (format #t "cgi_file_extensions: ~a~%"
-                  (string-join (assoc-ref user "cgiFileExtensions")))
-          (format #t "infected: ~a~%"
-                  (serialize-boolean (assoc-ref user "infected")))
-          (format #t "writable: ~a~%"
-                  (serialize-boolean (assoc-ref user "writable")))
-          (format #t "sendmail_allowed: ~a~%"
-                  (serialize-boolean (assoc-ref user "sendmailAllowed")))
-          (format #t "ddos_protection: ~a~%"
-                  (serialize-boolean (assoc-ref user "ddosProtection")))
-          (newline))))
+       (serialize-websites-args format-website))
 
       ((unix)
-       (serialize-website-args
-        (lambda (user)
-          (let ((unix-account (assoc-ref user "unixAccount")))
-            (format #t "quota: ~a/~a GB~%"
-                    (serialize-quota (assoc-ref unix-account "quotaUsed"))
-                    (serialize-quota (assoc-ref unix-account "quota")))
-            (format #t "server_id: ~a~%" (assoc-ref unix-account "serverId"))
-            (format #t "home_dir: ~a~%" (assoc-ref unix-account "homeDir"))
-            (newline)))))
+       (serialize-website-args format-unix))
 
       ((domain)
        (serialize-websites-args
         (lambda (user)
-          (for-each (lambda (domain)
-                      (let ((name (assoc-ref domain "name")))
-                        (format #t "name: ~a~%" name)
-                        (unless resolve? (resolve-domain name)))
-                      (match (assoc-ref domain "dnsResourceRecords")
-                        ((record records ...)
-                         (format #t "records: ~a ~a ~a ~a ~a\n"
-                                 (assoc-ref record "name")
-                                 (assoc-ref record "ttl")
-                                 (assoc-ref record "rrClass")
-                                 (assoc-ref record "rrType")
-                                 (assoc-ref record "data"))
-                         (for-each (lambda (record)
-                                     (format #t "+ ~a ~a ~a ~a ~a\n"
-                                             (assoc-ref record "name")
-                                             (assoc-ref record "ttl")
-                                             (assoc-ref record "rrClass")
-                                             (assoc-ref record "rrType")
-                                             (assoc-ref record "data")))
-                                   records))
-                        (_ '()))
-                      (newline))
-                    (assoc-ref user "domains"))))))))
+          (for-each format-domain (assoc-ref user "domains"))))))))
 
 (define (gms-account . args)
   ;; TODO: with-error-handling
