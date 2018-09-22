@@ -152,13 +152,13 @@
                          (lambda ()
                            (gms-vm "show" "vm12345")))
                        "\
-created: 2016-08-17 05:47:24
-changed: 2018-09-18 19:40:05
-status: enabled
-state: running
-template_id: 22
 client_id: 4653
 vnc_port: 5955
+state: running
+status: enabled
+changed: 2018-09-18 19:40:05
+created: 2016-08-17 05:47:24
+template_id: 22
 
 ")
              (string=? (with-output-to-string
@@ -166,16 +166,16 @@ vnc_port: 5955
                            (gms-vm "ip" "vm12345")))
                        "\
 ip_address: 78.108.95.38
-isp_license: #t
+isp_license: true
 
 ")
              (string=? (with-output-to-string
                          (lambda ()
                            (gms-vm "plan" "vm12345")))
                        "\
-created: 2014-07-01 16:54:18
 name: A-2
-admin: #t
+admin: true
+created: 2014-07-01 16:54:18
 
 ")
              (string=? (with-output-to-string
@@ -190,7 +190,7 @@ name: kvm27
                            (gms-vm "template" "vm12345"))))
                        "\
 name: Debian Linux 8 KVM (ISP Manager)
-URI: http://mirror.yandex.ru/debian/dists/jessie/main/installer-amd64/
+uri: http://mirror.yandex.ru/debian/dists/jessie/main/installer-amd64/
 
 "))))
 

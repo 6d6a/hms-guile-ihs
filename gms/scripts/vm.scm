@@ -43,6 +43,8 @@ Fetch data about user.\n"))
   (display (G_ "The valid values for ACTION are:\n"))
   (newline)
   (display (G_ "\
+   dump                  dump all available information\n"))
+  (display (G_ "\
    show                  show user\n"))
   (display (G_ "\
    ip                    show ip address\n"))
@@ -91,39 +93,49 @@ numbers, etc.) to names.") #f #f
       (alist-cons 'argument arg result)
       (let ((action (string->symbol arg)))
         (case action
-          ((ip plan server show template)
+          ((dump ip plan server show template)
            (alist-cons 'action action result))
           (else (leave (G_ "~a: unknown action~%") action))))))
 
 (define (process-command command args opts)
   (define (format-primary-ip-address primary-ip-address)
     (format #t "ip_address: ~a~%" (assoc-ref primary-ip-address "address"))
-    (format #t "isp_license: ~a~%" (assoc-ref primary-ip-address "isp_license")))
+    (format #t "isp_license: ~a~%"
+            (serialize-boolean (assoc-ref primary-ip-address "isp_license"))))
 
   (define (format-plan plan)
-    (format #t "created: ~a~%" (assoc-ref plan "created"))
     (format #t "name: ~a~%" (assoc-ref plan "name"))
-    (format #t "admin: ~a~%" (assoc-ref plan "adm")))
+    (format #t "admin: ~a~%" (serialize-boolean (assoc-ref plan "adm")))
+    (format #t "created: ~a~%" (assoc-ref plan "created")))
 
   (define (format-server server)
     (format #t "name: ~a~%" (assoc-ref server "name")))
 
   (define (format-account account)
-    (format #t "created: ~a~%" (assoc-ref account "created"))
-    (format #t "changed: ~a~%" (assoc-ref account "changed"))
-    (format #t "status: ~a~%" (assoc-ref account "status"))
-    (format #t "state: ~a~%" (assoc-ref account "state"))
-    (format #t "template_id: ~a~%" (assoc-ref account "vds_template_id"))
     (format #t "client_id: ~a~%" (assoc-ref account "client_id"))
-    (format #t "vnc_port: ~a~%" (assoc-ref account "vnc_port")))
+    (format #t "vnc_port: ~a~%" (assoc-ref account "vnc_port"))
+    (format #t "state: ~a~%" (assoc-ref account "state"))
+    (format #t "status: ~a~%" (assoc-ref account "status"))
+    (format #t "changed: ~a~%" (assoc-ref account "changed"))
+    (format #t "created: ~a~%" (assoc-ref account "created"))
+    (format #t "template_id: ~a~%" (assoc-ref account "vds_template_id")))
 
   (define (format-template template)
     (format #t "name: ~a~%" (assoc-ref template "name"))
-    (format #t "URI: ~a~%" (assoc-ref template "path")))
+    (format #t "uri: ~a~%" (assoc-ref template "path")))
 
   (for-each (lambda (arg)
               (let ((vds-account (vm->scm arg)))
                 (case command
+                  ((dump)
+                   (format-account vds-account)
+                   (format-template (assoc-ref vds-account "template"))
+                   (format-plan (assoc-ref vds-account "plan"))
+                   (format-primary-ip-address
+                    (assoc-ref vds-account "primary_ip_address"))
+                   (format-server (assoc-ref (assoc-ref vds-account "host")
+                                             "server"))
+                   (newline))
                   ((ip)
                    (format-primary-ip-address
                     (assoc-ref vds-account "primary_ip_address"))
