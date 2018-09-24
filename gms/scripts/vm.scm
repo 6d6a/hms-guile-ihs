@@ -20,6 +20,7 @@
   #:use-module ((guix scripts) #:select (parse-command-line))
   #:use-module ((guix ui) #:select (G_ leave))
   #:use-module (guix import utils)
+  #:use-module (gms config)
   #:use-module (gms scripts)
   #:use-module (gms ui)
   #:use-module (json)
@@ -78,7 +79,7 @@ numbers, etc.) to names.") #f #f
 (define %default-options '())
 
 (define (fetch-vm account)
-  (let* ((port   (apply open-pipe* OPEN_READ "jord-cvm" (list account)))
+  (let* ((port   (apply open-pipe* OPEN_READ %cvm (list account)))
          (output (read-string port)))
     (close-port port)
     (string-trim-right output #\newline)))

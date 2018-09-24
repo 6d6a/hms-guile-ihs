@@ -1,0 +1,18 @@
+(define-module (gms config)
+  #:export (%gms-package-name
+            %gms-version
+            %gms-home-page-url
+
+            %cvm))
+
+(define %gms-package-name
+  "@PACKAGE_NAME@")
+
+(define %gms-version
+  "@PACKAGE_VERSION@")
+
+(define %gms-home-page-url
+  "@PACKAGE_URL@")
+
+(define %cvm
+  "@CVM@")
