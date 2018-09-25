@@ -47,7 +47,8 @@ AM_CONDITIONAL([GUIX_DIR], [test "x$guixmoduledir" != "x"])
 AC_PROG_SED
 
 AM_INIT_AUTOMAKE([foreign])
-AC_CONFIG_FILES([Makefile])
+AC_CONFIG_FILES([Makefile
+                 gms/config.scm])
 
 AC_CONFIG_FILES([pre-inst-env:build-aux/pre-inst-env.in],
   [chmod +x pre-inst-env])
