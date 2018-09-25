@@ -81,3 +81,22 @@ GUILEC_ENV +=										   \
 $(GO_FILES): %.go: %.scm
 	-$(AM_V_GUILEC) $(GUILEC_ENV) \
 	$(GUILD) compile $(GUILEC_OPTS) --output=$@ $<
+
+# Test extensions; has to be unconditional.
+TEST_EXTENSIONS = .scm
+
+SCM_TESTS =					\
+  tests/account.scm			\
+  tests/search.scm			\
+  tests/vm.scm
+
+TESTS = $(SCM_TESTS)
+
+AM_TESTS_ENVIRONMENT = abs_top_srcdir="$(abs_top_srcdir)" GUILE_AUTO_COMPILE=0
+
+SCM_LOG_DRIVER =				\
+  $(top_builddir)/pre-inst-env			\
+  $(GUILE) --no-auto-compile -e main		\
+      $(top_srcdir)/build-aux/test-driver.scm
+
+AM_SCM_LOG_DRIVER_FLAGS = --brief=yes
