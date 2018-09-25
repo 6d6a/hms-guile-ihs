@@ -39,7 +39,8 @@ MODULES =					\
   gms//scripts/account/history.scm			\
   gms/scripts/account/search.scm			\
   gms/scripts/server.scm			\
-  gms/scripts/vm.scm
+  gms/scripts/vm.scm				\
+  gms.scm
 
 GO_FILES = $(MODULES:%.scm=%.go)
 
