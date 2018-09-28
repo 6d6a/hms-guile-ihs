@@ -102,46 +102,47 @@ Fetch data about server.\n"))
            (alist-cons 'action action result))
           (else (leave (G_ "~a: unknown action~%") action))))))
 
+(define (serialize-args procedure args)
+  (for-each (lambda (arg)
+              (for-each (lambda (server)
+                          (if (string=? (assoc-ref server "name") arg)
+                              (procedure server)
+                              '()))
+                        (with-input-from-file %cache-file read)))
+            args))
+
 (define (process-command command args opts)
   "Process COMMAND, one of the 'gms server' sub-commands.  ARGS is its
 argument list and OPTS is the option alist."
-  (define file
-    (with-input-from-file %cache-file read))
-
-  (define (serialize-args procedure)
-    (for-each (lambda (arg)
-                (for-each (lambda (server)
-                            (if (string=? (assoc-ref server "name") arg)
-                                (procedure server)
-                                '()))
-                          file))
-              args))
-
   (case command
     ((service)
-     (serialize-args (lambda (server)
-                       (for-each (lambda (service)
-                                   (format #t "id: ~a~%"
-                                           (assoc-ref service "id"))
-                                   (format #t "name: ~a~%"
-                                           (assoc-ref service "name"))
-                                   (newline))
-                                 (assoc-ref server "services")))))
+     (serialize-args
+      (lambda (server)
+        (for-each (lambda (service)
+                    (format #t "id: ~a~%"
+                            (assoc-ref service "id"))
+                    (format #t "name: ~a~%"
+                            (assoc-ref service "name"))
+                    (newline))
+                  (assoc-ref server "services")))
+      args))
     ((storage)
-     (serialize-args (lambda (server)
-                       (for-each (lambda (storage)
-                                   (format #t "id: ~a~%"
-                                           (assoc-ref storage "id"))
-                                   (format #t "name: ~a~%"
-                                           (assoc-ref storage "name"))
-                                   (format #t "online: ~a~%"
-                                           (serialize-boolean (assoc-ref storage "switchedOn")))
-                                   ;; TODO: Check capacity size.
-                                   (format #t "capacity: ~a/~a GB~%"
-                                           (serialize-quota (assoc-ref storage "capacityUsed"))
-                                           (serialize-quota (assoc-ref storage "capacity")))
-                                   (newline))
-                                 (assoc-ref server "storages")))))
+     (serialize-args
+      (lambda (server)
+        (for-each (lambda (storage)
+                    (format #t "id: ~a~%"
+                            (assoc-ref storage "id"))
+                    (format #t "name: ~a~%"
+                            (assoc-ref storage "name"))
+                    (format #t "online: ~a~%"
+                            (serialize-boolean (assoc-ref storage "switchedOn")))
+                    ;; TODO: Check capacity size.
+                    (format #t "capacity: ~a/~a GB~%"
+                            (serialize-quota (assoc-ref storage "capacityUsed"))
+                            (serialize-quota (assoc-ref storage "capacity")))
+                    (newline))
+                  (assoc-ref server "storages")))
+      args))
     ((socket)
      (serialize-args
       (lambda (server)
@@ -160,7 +161,8 @@ argument list and OPTS is the option alist."
                                          (assoc-ref socket "switchedOn")))
                                 (newline))
                               (assoc-ref service "serviceSockets")))
-                  (assoc-ref server "services")))))
+                  (assoc-ref server "services")))
+      args))
     ((show)
      (serialize-args
       (lambda (server)
@@ -170,7 +172,8 @@ argument list and OPTS is the option alist."
                 (assoc-ref server "name"))
         (format #t "online: ~a~%"
                 (serialize-boolean (assoc-ref server "switchedOn")))
-        (newline))))))
+        (newline))
+      args))))
 
 (define (option-arguments opts)
   ;; Extract the plain arguments from OPTS.
