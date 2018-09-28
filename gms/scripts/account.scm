@@ -60,8 +60,7 @@ Fetch data about user.\n"))
   #;(display (G_ "
   -V, --version          display version information and exit"))
   (newline)
-  ;; TODO: show-bug-report-information
-  #;(show-bug-report-information))
+  (show-bug-report-information))
 
 (define %options
   ;; Specifications of the command-line options.

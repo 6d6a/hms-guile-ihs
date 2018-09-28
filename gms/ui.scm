@@ -18,8 +18,11 @@
 
 (define-module (gms ui)
   #:autoload   (ice-9 ftw)  (scandir)
-  #:use-module (ice-9 match)
+  #:use-module ((guix ui)  #:select (G_))
+  #:use-module (gms config)
   #:use-module (guix import utils)
+  #:use-module (ice-9 format)
+  #:use-module (ice-9 match)
   #:use-module (json)
   #:use-module (rnrs bytevectors)
   #:use-module (srfi srfi-1)
@@ -28,7 +31,8 @@
   #:use-module (srfi srfi-37)
   #:use-module (web client)
   #:use-module (web response)
-  #:export (auth
+  #:export (show-bug-report-information
+            auth
             gms-main))
 
 (define gms-user
@@ -68,6 +72,17 @@
 ;;; ui
 ;;;
 
+(define (show-bug-report-information)
+  ;; TRANSLATORS: The placeholder indicates the bug-reporting address for this
+  ;; package.  Please add another line saying "Report translation bugs to
+  ;; ...\n" with the address for translation bugs (typically your translation
+  ;; team's web or email address).
+  (format #t (G_ "
+Report bugs to: ~a.") %gms-bug-report-address)
+  (format #t (G_ "
+~a home page: <~a>") %gms-package-name %gms-home-page-url)
+  (newline))
+
 (define (show-gms-usage)
   (format (current-error-port)
           "Try `gms --help' for more information.~%")
@@ -105,7 +120,8 @@
   (format
     #t
     "~{   ~a~%~}"
-    (sort (commands) string<?)))
+    (sort (commands) string<?))
+  (show-bug-report-information))
 
 (define program-name
   ;; Name of the command-line program currently executing, or #f.

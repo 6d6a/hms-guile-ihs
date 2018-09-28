@@ -1,18 +1,22 @@
 (define-module (gms config)
-  #:export (%gms-package-name
-            %gms-version
+  #:export (%gms-bug-report-address
             %gms-home-page-url
+            %gms-package-name
+            %gms-version
 
             %cvm))
 
 (define %gms-package-name
   "@PACKAGE_NAME@")
 
-(define %gms-version
-  "@PACKAGE_VERSION@")
+(define %gms-bug-report-address
+  "go.wigust@gmail.com")
 
 (define %gms-home-page-url
   "@PACKAGE_URL@")
+
+(define %gms-version
+  "@PACKAGE_VERSION@")
 
 (define %cvm
   "@CVM@")
