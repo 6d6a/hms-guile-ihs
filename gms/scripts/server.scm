@@ -81,9 +81,11 @@ Fetch data about server.\n"))
 
 (define (fetch-server)
   (let-values (((response body)
-                (http-get (string-append "https://api.majordomo.ru/rc-staff/server")
+                (http-get (string-append "https://api.majordomo.ru/rc-staff\
+/server")
                           #:headers `((content-type . (application/json))
-                                      (Authorization . ,(format #f "Bearer ~a" (auth))))
+                                      (Authorization . ,(format #f "Bearer ~a"
+                                                                (auth))))
                           #:keep-alive? #t)))
     (utf8->string body)))
 

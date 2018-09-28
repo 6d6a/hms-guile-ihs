@@ -69,7 +69,8 @@ Fetch data about server.\n"))
 
 (define (search-domain domain)
   (let-values (((response body)
-                (http-get (string-append "https://api.majordomo.ru/domain/filter?nameContains="
+                (http-get (string-append "https://api.majordomo.ru/domain\
+/filter?nameContains="
                                          domain)
                           #:headers `((content-type
                                        . (application/json))
@@ -83,7 +84,8 @@ Fetch data about server.\n"))
 
 (define (search-account account)
   (let-values (((response body)
-                (http-get (string-append "https://api.majordomo.ru/pm/accounts?accountId="
+                (http-get (string-append "https://api.majordomo.ru/pm\
+/accounts?accountId="
                                          account)
                           #:headers `((content-type
                                        . (application/json))
@@ -97,7 +99,8 @@ Fetch data about server.\n"))
 
 (define (search-owner owner)
   (let-values (((response body)
-                (http-get (string-append "https://api.majordomo.ru/pm/account-owner/search?search="
+                (http-get (string-append "https://api.majordomo.ru/pm\
+/account-owner/search?search="
                                          owner)
                           #:headers `((content-type
                                        . (application/json))
@@ -133,7 +136,8 @@ Fetch data about server.\n"))
                      (for-each (lambda (account)
                                  (serialize-account-number account)
                                  (newline))
-                               (assoc-ref (account->scm (serialize-account arg)) "content")))
+                               (assoc-ref (account->scm (serialize-account arg))
+                                          "content")))
                     ((string-contains arg "@")
                      (map (lambda (owner)
                             (serialize-owner owner)
