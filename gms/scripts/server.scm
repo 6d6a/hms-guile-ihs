@@ -52,6 +52,10 @@ Fetch data about server.\n"))
   (display (G_ "\
    service           search for existing service types\n"))
   (display (G_ "\
+   show              show server\n"))
+  (display (G_ "\
+   sockets           display sockets\n"))
+  (display (G_ "\
    storage           search for existing storage types\n"))
   (newline)
   (display (G_ "
