@@ -4408,6 +4408,352 @@ id: web_server_134
 name: web33
 online: true
 
+")
+                    (string=? (with-output-to-string
+                                (lambda ()
+                                  (gms-server "service" "web33")))
+                              "\
+id: 134_mysql_service
+name: mysql@web33
+
+id: 590887bc719fca7d7243e816
+name: nginx@web33
+
+id: 590887c8719fca7d7243e9e3
+name: apache2-php52-unsafe@web33
+
+id: 590887c8719fca7d7243e9e4
+name: apache2-php53-unsafe@web33
+
+id: 590887c8719fca7d7243e9e5
+name: apache2-php54-unsafe@web33
+
+id: 590887c8719fca7d7243e9e6
+name: apache2-php55-unsafe@web33
+
+id: 590887c9719fca7d7243e9e7
+name: apache2-php56-unsafe@web33
+
+id: 590887c9719fca7d7243e9e8
+name: apache2-php70-unsafe@web33
+
+id: 590887c9719fca7d7243e9e9
+name: apache2-php52-hardened_nochmod@web33
+
+id: 590887c9719fca7d7243e9ea
+name: apache2-php53-hardened_nochmod@web33
+
+id: 590887c9719fca7d7243e9eb
+name: apache2-php54-hardened_nochmod@web33
+
+id: 590887c9719fca7d7243e9ec
+name: apache2-php55-hardened_nochmod@web33
+
+id: 590887c9719fca7d7243e9ed
+name: apache2-php56-hardened_nochmod@web33
+
+id: 590887c9719fca7d7243e9ee
+name: apache2-php70-hardened_nochmod@web33
+
+id: 590887c9719fca7d7243e9ef
+name: apache2-php52-hardened@web33
+
+id: 590887c9719fca7d7243e9f0
+name: apache2-php53-hardened@web33
+
+id: 590887c9719fca7d7243e9f1
+name: apache2-php54-hardened@web33
+
+id: 590887c9719fca7d7243e9f2
+name: apache2-php55-hardened@web33
+
+id: 590887c9719fca7d7243e9f3
+name: apache2-php56-hardened@web33
+
+id: 590887c9719fca7d7243e9f4
+name: apache2-php70-hardened@web33
+
+id: 590887c9719fca7d7243e9f5
+name: apache2-php70-default@web33
+
+id: 590887c9719fca7d7243e9f6
+name: apache2-php52-default@web33
+
+id: 590887c9719fca7d7243e9f7
+name: apache2-php53-default@web33
+
+id: 590887c9719fca7d7243e9f8
+name: apache2-php54-default@web33
+
+id: 590887c9719fca7d7243e9f9
+name: apache2-php55-default@web33
+
+id: 590887c9719fca7d7243e9fa
+name: apache2-php56-default@web33
+
+id: 590887c9719fca7d7243e9fb
+name: apache2-perl518@web33
+
+id: 5a2eadc02634f100080a9436
+name: apache2-php71-default@web33
+
+id: 5a2eadc02634f100080a9437
+name: apache2-php72-default@web33
+
+id: 5a2eadc02634f100080a9438
+name: apache2-php71-unsafe@web33
+
+id: 5a2eadc02634f100080a9439
+name: apache2-php72-unsafe@web33
+
+id: 5a2eadc02634f100080a943a
+name: apache2-php71-hardened@web33
+
+id: 5a2eadc12634f100080a943b
+name: apache2-php72-hardened@web33
+
+id: 5a2eadc12634f100080a943c
+name: apache2-php71-hardened_nochmod@web33
+
+id: 5a2eadc12634f100080a943d
+name: apache2-php72-hardened_nochmod@web33
+
+")
+                    (string=? (with-output-to-string
+                                (lambda ()
+                                  (gms-server "storage" "web33")))
+                              "\
+id: 59086e28719fca5b2880566b
+name: web33
+online: true
+capacity: 1.22/8000.0 GB
+
+id: 59086e28719fca5b2880566c
+name: web33
+online: true
+capacity: 1.22/8000.0 GB
+
+")
+                    (string=? (with-output-to-string
+                                (lambda ()
+                                  (gms-server "socket" "web33")))
+                    "\
+id: 134_mysql_socket
+name: mysql-mysql@web33
+address: 185.84.108.20
+port: 3306
+online: true
+
+id: 59086e0f719fca5b2880539c
+name: nginx-http@web33
+address: 185.84.108.20
+port: 80
+online: true
+
+id: 59086e0f719fca5b2880539d
+name: nginx-https@web33
+address: 185.84.108.20
+port: 443
+online: true
+
+id: 59086e0f719fca5b2880539e
+name: apache2-php52-unsafe-http@web33
+address: 127.0.0.1
+port: 8152
+online: true
+
+id: 59086e0f719fca5b2880539f
+name: apache2-php53-unsafe-http@web33
+address: 127.0.0.1
+port: 8153
+online: true
+
+id: 59086e0f719fca5b288053a0
+name: apache2-php54-unsafe-http@web33
+address: 127.0.0.1
+port: 8154
+online: true
+
+id: 59086e10719fca5b288053a1
+name: apache2-php55-unsafe-http@web33
+address: 127.0.0.1
+port: 8155
+online: true
+
+id: 59086e10719fca5b288053a2
+name: apache2-php56-unsafe-http@web33
+address: 127.0.0.1
+port: 8156
+online: true
+
+id: 59086e10719fca5b288053a3
+name: apache2-php70-unsafe-http@web33
+address: 127.0.0.1
+port: 8170
+online: true
+
+id: 59086e10719fca5b288053a4
+name: apache2-php52-hardened_nochmod-http@web33
+address: 127.0.0.1
+port: 8252
+online: true
+
+id: 59086e10719fca5b288053a5
+name: apache2-php53-hardened_nochmod-http@web33
+address: 127.0.0.1
+port: 8253
+online: true
+
+id: 59086e10719fca5b288053a6
+name: apache2-php54-hardened_nochmod-http@web33
+address: 127.0.0.1
+port: 8254
+online: true
+
+id: 59086e10719fca5b288053a7
+name: apache2-php55-hardened_nochmod-http@web33
+address: 127.0.0.1
+port: 8255
+online: true
+
+id: 59086e10719fca5b288053a8
+name: apache2-php56-hardened_nochmod-http@web33
+address: 127.0.0.1
+port: 8256
+online: true
+
+id: 59086e10719fca5b288053a9
+name: apache2-php70-hardened_nochmod-http@web33
+address: 127.0.0.1
+port: 8270
+online: true
+
+id: 59086e10719fca5b288053aa
+name: apache2-php52-hardened-http@web33
+address: 127.0.0.1
+port: 8352
+online: true
+
+id: 59086e10719fca5b288053ab
+name: apache2-php53-hardened-http@web33
+address: 127.0.0.1
+port: 8353
+online: true
+
+id: 59086e10719fca5b288053ac
+name: apache2-php54-hardened-http@web33
+address: 127.0.0.1
+port: 8354
+online: true
+
+id: 59086e10719fca5b288053ad
+name: apache2-php55-hardened-http@web33
+address: 127.0.0.1
+port: 8355
+online: true
+
+id: 59086e10719fca5b288053ae
+name: apache2-php56-hardened-http@web33
+address: 127.0.0.1
+port: 8356
+online: true
+
+id: 59086e10719fca5b288053af
+name: apache2-php70-hardened-http@web33
+address: 127.0.0.1
+port: 8370
+online: true
+
+id: 59086e10719fca5b288053b0
+name: apache2-php70-default-http@web33
+address: 127.0.0.1
+port: 8070
+online: true
+
+id: 59086e10719fca5b288053b1
+name: apache2-php52-default-http@web33
+address: 127.0.0.1
+port: 8052
+online: true
+
+id: 59086e10719fca5b288053b2
+name: apache2-php53-default-http@web33
+address: 127.0.0.1
+port: 8053
+online: true
+
+id: 59086e10719fca5b288053b3
+name: apache2-php54-default-http@web33
+address: 127.0.0.1
+port: 8054
+online: true
+
+id: 59086e11719fca5b288053b4
+name: apache2-php55-default-http@web33
+address: 127.0.0.1
+port: 8055
+online: true
+
+id: 59086e11719fca5b288053b5
+name: apache2-php56-default-http@web33
+address: 127.0.0.1
+port: 8056
+online: true
+
+id: 59086e11719fca5b288053b6
+name: apache2-perl518-http@web33
+address: 127.0.0.1
+port: 7518
+online: true
+
+id: 5a2e8fe8ea96ca000b37e851
+name: apache2-php71-default-http@web33
+address: 127.0.0.1
+port: 8071
+online: true
+
+id: 5a2e8ff9ea96ca000b37e87d
+name: apache2-php72-default-http@web33
+address: 127.0.0.1
+port: 8072
+online: true
+
+id: 5a2e8fecea96ca000b37e85c
+name: apache2-php71-unsafe-http@web33
+address: 127.0.0.1
+port: 8171
+online: true
+
+id: 5a2e8ffeea96ca000b37e888
+name: apache2-php72-unsafe-http@web33
+address: 127.0.0.1
+port: 8172
+online: true
+
+id: 5a2e8ff1ea96ca000b37e867
+name: apache2-php71-hardened-http@web33
+address: 127.0.0.1
+port: 8371
+online: true
+
+id: 5a2e9002ea96ca000b37e893
+name: apache2-php72-hardened-http@web33
+address: 127.0.0.1
+port: 8372
+online: true
+
+id: 5a2e8ff5ea96ca000b37e872
+name: apache2-php71-hardened_nochmod-http@web33
+address: 127.0.0.1
+port: 8271
+online: true
+
+id: 5a2e9007ea96ca000b37e89e
+name: apache2-php72-hardened_nochmod-http@web33
+address: 127.0.0.1
+port: 8272
+online: true
+
 ")))))
 
 (test-end "server")
