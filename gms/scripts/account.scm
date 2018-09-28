@@ -306,6 +306,25 @@ argument list and OPTS is the option alist."
         (lambda (user)
           (for-each format-domain (assoc-ref user "domains"))))))))
 
+(define (option-arguments opts)
+  ;; Extract the plain arguments from OPTS.
+  (let* ((args   (reverse (filter-map (match-pair 'argument) opts)))
+         (count  (length args))
+         (action (assoc-ref opts 'action))
+         (expr   (assoc-ref opts 'expression)))
+    (define (fail)
+      (leave (G_ "wrong number of arguments for action '~a'~%")
+             action))
+
+    (unless action
+      (format (current-error-port)
+              (G_ "gms account: missing command name~%"))
+      (format (current-error-port)
+              (G_ "Try 'gms account --help' for more information.~%"))
+      (exit 1))
+
+    args))
+
 (define (gms-account . args)
   ;; TODO: with-error-handling
   (let* ((opts (parse-command-line args %options

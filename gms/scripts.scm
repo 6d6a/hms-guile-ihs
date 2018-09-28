@@ -12,7 +12,6 @@
   #:use-module (guix scripts)
   #:use-module ((guix ui)  #:select (leave G_))
   #:export (match-pair
-            option-arguments
 
             serialize-boolean
             serialize-field
@@ -24,25 +23,6 @@
     ((head . tail)
      (and (eq? car head) tail))
     (_ #f)))
-
-(define (option-arguments opts)
-  ;; Extract the plain arguments from OPTS.
-  (let* ((args   (reverse (filter-map (match-pair 'argument) opts)))
-         (count  (length args))
-         (action (assoc-ref opts 'action))
-         (expr   (assoc-ref opts 'expression)))
-    (define (fail)
-      (leave (G_ "wrong number of arguments for action '~a'~%")
-             action))
-
-    (unless action
-      (format (current-error-port)
-              (G_ "guix system: missing command name~%"))
-      (format (current-error-port)
-              (G_ "Try 'guix system --help' for more information.~%"))
-      (exit 1))
-
-    args))
 
 (define (serialize-boolean value)
   (if value "true" "false"))

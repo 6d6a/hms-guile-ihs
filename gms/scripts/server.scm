@@ -17,17 +17,31 @@
 ;;; with Guile GMS.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gms scripts server)
+  #:use-module ((guix build utils) #:select (mkdir-p))
   #:use-module ((guix scripts) #:select (parse-command-line))
   #:use-module ((guix ui)  #:select (leave G_))
-  #:use-module (guix import utils)
   #:use-module (gms scripts)
   #:use-module (gms ui)
+  #:use-module (gms utils)
+  #:use-module (guix import utils)
+  #:use-module (ice-9 pretty-print)
   #:use-module (json)
   #:use-module (rnrs bytevectors)
   #:use-module (srfi srfi-1)
+  #:use-module (srfi srfi-11)
+  #:use-module (srfi srfi-26)
   #:use-module (srfi srfi-37)
   #:use-module (web client)
-  #:export (gms-server))
+  #:export (gms-server
+            update-cache))
+
+(define %cache-file
+  (string-append (cache-directory) "/servers.scm"))
+
+
+;;;
+;;; Command-line
+;;;
 
 (define (show-help)
   (display (G_ "Usage: gms server [OPTION ...] ACTION [ARG ...] [FILE]
@@ -62,15 +76,21 @@ Fetch data about server.\n"))
 ;;; Entry point.
 ;;;
 
-(define (tester)
+(define (fetch-server)
   (let-values (((response body)
-                   (http-get (string-append "https://api.majordomo.ru/rc-staff/server")
-                             #:headers `((content-type . (application/json))
-                                         (Authorization . ,(format #f "Bearer ~a" (pk (auth)))))
-                             #:keep-alive? #t)))
-       (with-output-to-file "/tmp/gms-servers.scm"
-         (lambda ()
-           (write (map hash-table->alist (json-string->scm (utf8->string body))))))))
+                (http-get (string-append "https://api.majordomo.ru/rc-staff/server")
+                          #:headers `((content-type . (application/json))
+                                      (Authorization . ,(format #f "Bearer ~a" (auth))))
+                          #:keep-alive? #t)))
+    (utf8->string body)))
+
+(define (server->scm)
+  (map hash-table->alist (json-string->scm (fetch-server))))
+
+(define (update-cache)
+  (with-output-to-file %cache-file
+    (lambda ()
+      (pretty-print (server->scm)))))
 
 (define (parse-sub-command arg result)
   ;; Parse sub-command ARG and augment RESULT accordingly.
@@ -82,20 +102,19 @@ Fetch data about server.\n"))
            (alist-cons 'action action result))
           (else (leave (G_ "~a: unknown action~%") action))))))
 
-;; TODO: Use json.
-#;(map hash-table->alist (json-string->scm (utf8->string body)))
-#;(list (hash-table->alist (list-ref (json-string->scm (utf8->string body)) 23)))
-
 (define (process-command command args opts)
   "Process COMMAND, one of the 'gms server' sub-commands.  ARGS is its
 argument list and OPTS is the option alist."
+  (define file
+    (with-input-from-file %cache-file read))
+
   (define (serialize-args procedure)
     (for-each (lambda (arg)
                 (for-each (lambda (server)
                             (if (string=? (assoc-ref server "name") arg)
                                 (procedure server)
                                 '()))
-                          (with-input-from-file "/tmp/gms-servers.scm" read)))
+                          file))
               args))
 
   (case command
@@ -152,6 +171,25 @@ argument list and OPTS is the option alist."
         (format #t "online: ~a~%"
                 (serialize-boolean (assoc-ref server "switchedOn")))
         (newline))))))
+
+(define (option-arguments opts)
+  ;; Extract the plain arguments from OPTS.
+  (let* ((args   (reverse (filter-map (match-pair 'argument) opts)))
+         (count  (length args))
+         (action (assoc-ref opts 'action))
+         (expr   (assoc-ref opts 'expression)))
+    (define (fail)
+      (leave (G_ "wrong number of arguments for action '~a'~%")
+             action))
+
+    (unless action
+      (format (current-error-port)
+              (G_ "gms server: missing command name~%"))
+      (format (current-error-port)
+              (G_ "Try 'gms server --help' for more information.~%"))
+      (exit 1))
+
+    args))
 
 (define (gms-server . args)
   ;; TODO: with-error-handling

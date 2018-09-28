@@ -40,6 +40,7 @@ MODULES =					\
   gms/scripts/account/search.scm			\
   gms/scripts/server.scm			\
   gms/scripts/vm.scm				\
+  gms/utils.scm					\
   gms.scm
 
 GO_FILES = $(MODULES:%.scm=%.go)
@@ -88,6 +89,7 @@ TEST_EXTENSIONS = .scm
 SCM_TESTS =					\
   tests/account.scm			\
   tests/search.scm			\
+  tests/server.scm			\
   tests/vm.scm
 
 TESTS = $(SCM_TESTS)
