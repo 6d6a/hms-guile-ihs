@@ -33,7 +33,8 @@
   #:use-module (srfi srfi-37)
   #:use-module (web client)
   #:export (gms-server
-            update-cache))
+            update-cache
+            serialize-server-args))
 
 (define %cache-file
   (string-append (cache-directory) "/servers.scm"))
@@ -107,10 +108,11 @@ Fetch data about server.\n"))
            (alist-cons 'action action result))
           (else (leave (G_ "~a: unknown action~%") action))))))
 
-(define (serialize-args procedure args)
+(define (serialize-server-args procedure args)
   (for-each (lambda (arg)
               (for-each (lambda (server)
-                          (if (string=? (assoc-ref server "name") arg)
+                          (if (or (string=? (assoc-ref server "name") arg)
+                                  (string=? (assoc-ref server "id") arg))
                               (procedure server)
                               '()))
                         (with-input-from-file %cache-file read)))
@@ -121,7 +123,7 @@ Fetch data about server.\n"))
 argument list and OPTS is the option alist."
   (case command
     ((service)
-     (serialize-args
+     (serialize-server-args
       (lambda (server)
         (for-each (lambda (service)
                     (format #t "id: ~a~%"
@@ -132,7 +134,7 @@ argument list and OPTS is the option alist."
                   (assoc-ref server "services")))
       args))
     ((storage)
-     (serialize-args
+     (serialize-server-args
       (lambda (server)
         (for-each (lambda (storage)
                     (format #t "id: ~a~%"
@@ -149,7 +151,7 @@ argument list and OPTS is the option alist."
                   (assoc-ref server "storages")))
       args))
     ((socket)
-     (serialize-args
+     (serialize-server-args
       (lambda (server)
         (for-each (lambda (service)
                     (for-each (lambda (socket)
@@ -169,7 +171,7 @@ argument list and OPTS is the option alist."
                   (assoc-ref server "services")))
       args))
     ((show)
-     (serialize-args
+     (serialize-server-args
       (lambda (server)
         (format #t "id: ~a~%"
                 (assoc-ref server "id"))

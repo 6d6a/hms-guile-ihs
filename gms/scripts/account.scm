@@ -30,6 +30,7 @@
   #:use-module (srfi srfi-26)
   #:use-module (srfi srfi-37)
   #:use-module (web client)
+  #:use-module (gms scripts server)
   #:export (account->scm
             gms-account
             serialize-account
@@ -238,7 +239,12 @@ argument list and OPTS is the option alist."
         (format #t "quota: ~a/~a GB~%"
                 (serialize-quota (assoc-ref unix-account "quotaUsed"))
                 (serialize-quota (assoc-ref unix-account "quota")))
-        (format #t "server_id: ~a~%" (assoc-ref unix-account "serverId"))
+        (let ((server-id (assoc-ref unix-account "serverId")))
+          (format #t "server_id: ~a~%" (assoc-ref unix-account "serverId"))
+          (serialize-server-args
+           (lambda (server)
+             (format #t "server_name: ~a~%" (assoc-ref server "name")))
+           (list server-id)))
         (format #t "home_dir: ~a~%" (assoc-ref unix-account "homeDir"))
         (newline)))
 

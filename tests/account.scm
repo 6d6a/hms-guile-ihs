@@ -20,6 +20,7 @@
   #:use-module (guix tests)
   #:use-module (gms scripts)
   #:use-module (gms scripts account)
+  #:use-module ((gms scripts server) #:select (update-cache))
   #:use-module (ice-9 match)
   #:use-module (srfi srfi-64))
 
@@ -372,6 +373,12 @@
   \"abonementAutoRenew\": false
 }")
 
+(define test-server-json "
+[{
+  \"id\": \"web_server_134\",
+  \"name\": \"web33\"
+}]")
+
 (test-begin "account")
 
 (test-assert "gms-website"
@@ -380,19 +387,24 @@
            (match (serialize-account account)
              ("208112" test-website-json)
              (_ (error "Nonexistent account: " account)))))
-        (and (string=? (with-output-to-string
-                         (lambda ()
-                           (gms-account "unix" "ac_208112")))
-                       "\
+        (mock ((gms scripts server) fetch-server
+               (lambda ()
+                 test-server-json))
+              (begin (update-cache)
+                     (and (string=? (with-output-to-string
+                                      (lambda ()
+                                        (gms-account "unix" "ac_208112")))
+                                    "\
 quota: 0.48/10.0 GB
 server_id: web_server_134
+server_name: web33
 home_dir: /home/u7590
 
 ")
-             (string=? (with-output-to-string
-                         (lambda ()
-                           (gms-account "website" "ac_208112")))
-                       "\
+                          (string=? (with-output-to-string
+                                      (lambda ()
+                                        (gms-account "website" "ac_208112")))
+                                    "\
 name: ac-208112.ru
 document_root: ac-208112.ru/www
 auto_sub_domain: false
@@ -406,10 +418,10 @@ sendmail_allowed: false
 ddos_protection: false
 
 ")
-             (string=? (with-output-to-string
-                         (lambda ()
-                           (gms-account "domain" "-n" "ac_208112")))
-                       "\
+                          (string=? (with-output-to-string
+                                      (lambda ()
+                                        (gms-account "domain" "-n" "ac_208112")))
+                                    "\
 name: ac-208112.ru
 records: ac-208112.ru 3600 IN SOA ns.majordomo.ru. support.majordomo.ru. 2004032900 3600 900 3600000 3600
 + ac-208112.ru 3600 IN NS ns.majordomo.ru
@@ -422,7 +434,7 @@ records: ac-208112.ru 3600 IN SOA ns.majordomo.ru. support.majordomo.ru. 2004032
 + ac-208112.ru 3600 IN CNAME pop3.majordomo.ru
 + ac-208112.ru 3600 IN CNAME mail.majordomo.ru
 
-"))))
+"))))))
 
 (test-assert "gms-account"
   (mock ((gms scripts account) fetch-account
