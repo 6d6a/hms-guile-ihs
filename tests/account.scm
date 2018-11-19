@@ -398,6 +398,7 @@
 quota: 0.48/10.0 GB
 server_id: web_server_134
 server_name: web33
+name: u7590
 home_dir: /home/u7590
 
 ")

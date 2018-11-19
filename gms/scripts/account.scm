@@ -248,6 +248,7 @@ argument list and OPTS is the option alist."
            (lambda (server)
              (format #t "server_name: ~a~%" (assoc-ref server "name")))
            (list server-id)))
+        (format #t "name: ~a~%" (assoc-ref unix-account "name"))
         (format #t "home_dir: ~a~%" (assoc-ref unix-account "homeDir"))
         (newline)))
 
