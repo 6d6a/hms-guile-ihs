@@ -38,6 +38,7 @@ MODULES =					\
   gms/scripts/account.scm			\
   gms/scripts/account/history.scm			\
   gms/scripts/account/search.scm			\
+  gms/scripts/cerb.scm				\
   gms/scripts/pull.scm				\
   gms/scripts/server.scm			\
   gms/scripts/vm.scm				\
