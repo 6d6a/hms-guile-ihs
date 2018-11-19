@@ -19,6 +19,7 @@
 (define-module (gms scripts account)
   #:use-module ((guix scripts) #:select (parse-command-line))
   #:use-module ((guix ui) #:select (G_ leave))
+  #:use-module (guix build utils)
   #:use-module (guix import utils)
   #:use-module (gms scripts)
   #:use-module (gms ui)
@@ -50,6 +51,8 @@ Fetch data about user.\n"))
    dump                  dump all available information\n"))
   (display (G_ "\
    service               search for existing service types\n"))
+  (display (G_ "\
+   open                  open billing\n"))
   (display (G_ "\
    show                  show user\n"))
   (display (G_ "\
@@ -123,7 +126,7 @@ numbers, etc.) to names.") #f #f
       (alist-cons 'argument arg result)
       (let ((action (string->symbol arg)))
         (case action
-          ((domain dump history search service show unix website)
+          ((domain dump history search service show open unix website)
            (alist-cons 'action action result))
           (else (leave (G_ "~a: unknown action~%") action))))))
 
@@ -305,6 +308,33 @@ argument list and OPTS is the option alist."
 
       ((unix)
        (serialize-website-args format-unix))
+
+      ((open)
+       (for-each (lambda (account)
+                   (let-values (((response body)
+                                 (http-post (string-append "https://api.majordomo.ru/si/web-access-accounts/"
+                                                           account
+                                                           "/create_token")
+                                            #:headers `((content-type . (application/json))
+                                                        (Authorization . ,(format #f "Bearer ~a" (auth))))
+                                            #:body "{}"
+                                            #:keep-alive? #t)))
+                     (let ((json (hash-table->alist (json-string->scm (utf8->string body)))))
+                       ;; TODO: Open browser for all accounts in parallel
+                       (for-each (match-lambda
+                                   (("token" records ...)
+                                    (let ((account-profile (string-append "/tmp/" account)))
+                                      (format #t "Open account: ~a~%" account)
+                                      (mkdir-p account-profile)
+                                      (system* "firefox" "--new-instance"
+                                               "--profile" account-profile
+                                               "--private-window"
+                                               (string-append "https://hms.majordomo.ru/login"
+                                                              "?bearer=" (assoc-ref records "access_token")
+                                                              "&refresh=" (assoc-ref records "refresh_token")))))
+                                   (_ #f))
+                                 (assoc-ref json "params")))))
+                 args))
 
       ((domain)
        (serialize-websites-args
