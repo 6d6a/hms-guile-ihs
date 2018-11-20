@@ -54,6 +54,8 @@ Fetch data about user.\n"))
   (display (G_ "\
    dump                  dump all available information\n"))
   (display (G_ "\
+   ftp                   show ftp users on account\n"))
+  (display (G_ "\
    mailbox               show mailboxes on account\n"))
   (display (G_ "\
    service               search for existing service types\n"))
@@ -132,8 +134,8 @@ numbers, etc.) to names.") #f #f
       (alist-cons 'argument arg result)
       (let ((action (string->symbol arg)))
         (case action
-          ((database database-user domain dump history mailbox search service
-            show open unix website)
+          ((database database-user domain dump ftp history mailbox search
+            service show open unix website)
            (alist-cons 'action action result))
           (else (leave (G_ "~a: unknown action~%") action))))))
 
@@ -167,6 +169,17 @@ numbers, etc.) to names.") #f #f
 
 (define (account-websites->scm account)
   (map hash-table->alist (json-string->scm (account-websites account))))
+
+(define (account-ftp account)
+  (let-values (((response body)
+                (http-get (string-append "https://api.majordomo.ru/" account "/ftp-user")
+                          #:headers `((content-type . (application/json))
+                                      (Authorization . ,(format #f "Bearer ~a" (auth))))
+                          #:keep-alive? #t)))
+    (utf8->string body)))
+
+(define (account-ftp->scm account)
+  (map hash-table->alist (json-string->scm (account-ftp account))))
 
 (define (account-mailbox account)
   (let-values (((response body)
@@ -389,6 +402,40 @@ argument list and OPTS is the option alist."
        (serialize-websites-args
         (lambda (user)
           (for-each format-domain (assoc-ref user "domains")))))
+
+      ((ftp)
+       (for-each (lambda (account)
+                   (for-each (lambda (user)
+                               (format #t "will_be_deleted: ~a~%"
+                                       (serialize-boolean
+                                        (assoc-ref user "willBeDeleted")))
+                               (format #t "id: ~a~%"
+                                       (assoc-ref user "id"))
+                               (format #t "name: ~a~%"
+                                       (assoc-ref user "name"))
+                               (format #t "account_id: ~a~%"
+                                       (assoc-ref user "accountId"))
+                               (format #t "switched_on: ~a~%"
+                                       (serialize-boolean
+                                        (assoc-ref user "switchedOn")))
+                               (format #t "home_dir: ~a~%"
+                                       (assoc-ref user "homeDir"))
+                               (format #t "type: ~a~%"
+                                       (serialize-boolean
+                                        (assoc-ref user "type")))
+                               (format #t "allow_web_ftp: ~a~%"
+                                       (serialize-boolean
+                                        (assoc-ref user "allowWebFtp")))
+                               (format #t "allowed_ip_addresses: ~a~%"
+                                       (assoc-ref user "allowedIPAddresses"))
+                               (format #t "password_hash: ~a~%"
+                                       (assoc-ref user "passwordHash"))
+                               (format #t "locked: ~a~%"
+                                       (serialize-boolean
+                                        (assoc-ref user "locked")))
+                               (newline))
+                             (account-ftp->scm account)))
+                 args))
 
       ((history)
        (apply (resolve-subcommand "history") args))
