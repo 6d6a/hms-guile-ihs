@@ -50,6 +50,8 @@ Fetch data about user.\n"))
   (display (G_ "\
    dump                  dump all available information\n"))
   (display (G_ "\
+   mailbox               show mailboxes on account\n"))
+  (display (G_ "\
    service               search for existing service types\n"))
   (display (G_ "\
    open                  open billing\n"))
@@ -126,7 +128,7 @@ numbers, etc.) to names.") #f #f
       (alist-cons 'argument arg result)
       (let ((action (string->symbol arg)))
         (case action
-          ((domain dump history search service show open unix website)
+          ((domain dump history mailbox search service show open unix website)
            (alist-cons 'action action result))
           (else (leave (G_ "~a: unknown action~%") action))))))
 
@@ -160,6 +162,17 @@ numbers, etc.) to names.") #f #f
 
 (define (account-websites->scm account)
   (map hash-table->alist (json-string->scm (account-websites account))))
+
+(define (account-mailbox account)
+  (let-values (((response body)
+                (http-get (string-append "https://api.majordomo.ru/" account "/mailbox")
+                          #:headers `((content-type . (application/json))
+                                      (Authorization . ,(format #f "Bearer ~a" (auth))))
+                          #:keep-alive? #t)))
+    (utf8->string body)))
+
+(define (account-mailbox->scm account)
+  (map hash-table->alist (json-string->scm (account-mailbox account))))
 
 (define (resolve-subcommand name)
   (let ((module (resolve-interface
@@ -292,6 +305,67 @@ argument list and OPTS is the option alist."
 
       ((history)
        (apply (resolve-subcommand "history") args))
+
+      ((mailbox)
+       (for-each (lambda (account)
+                   (for-each (lambda (mailbox)
+                               (format #t "quota_used: ~a~%"
+                                       (assoc-ref mailbox "quotaUsed"))
+                               (format #t "server_id: ~a~%"
+                                       (assoc-ref mailbox "serverId"))
+                               (format #t "will_be_deleted: ~a~%"
+                                       (serialize-boolean
+                                        (assoc-ref mailbox "willBeDeleted")))
+                               (format #t "id: ~a~%"
+                                       (assoc-ref mailbox "id"))
+                               (format #t "mail_spool: ~a~%"
+                                       (assoc-ref mailbox "mailSpool"))
+                               (format #t "white_list: ~a~%"
+                                       (assoc-ref mailbox "whiteList"))
+                               (format #t "quota: ~a~%"
+                                       (assoc-ref mailbox "quota"))
+                               (format #t "name: ~a~%"
+                                       (assoc-ref mailbox "name"))
+                               (format #t "account_id: ~a~%"
+                                       (assoc-ref mailbox "accountId"))
+                               (format #t "switched_on: ~a~%"
+                                       (serialize-boolean
+                                        (assoc-ref mailbox "switchedOn")))
+                               (format #t "is_aggregator: ~a~%"
+                                       (assoc-ref mailbox "isAggregator"))
+                               (format #t "type: ~a~%"
+                                       (assoc-ref mailbox "@type"))
+                               (format #t "spam_filter_mood: ~a~%"
+                                       (assoc-ref mailbox "spamFilterMood"))
+                               (format #t "writable: ~a~%"
+                                       (serialize-boolean
+                                        (assoc-ref mailbox "writable")))
+                               (format #t "black_list: ~a~%"
+                                       (assoc-ref mailbox "blackList"))
+                               (format #t "domain_id: ~a~%"
+                                       (assoc-ref mailbox "domainId"))
+                               (format #t "password_hash: ~a~%"
+                                       (assoc-ref mailbox "passwordHash"))
+                               (format #t "comment: ~a~%"
+                                       (assoc-ref mailbox "comment"))
+                               (format #t "mail_from_allowed: ~a~%"
+                                       (serialize-boolean
+                                        (assoc-ref mailbox "mailFromAllowed")))
+                               (format #t "redirect_addresses: ~a~%"
+                                       (assoc-ref mailbox "redirectAddresses"))
+                               (format #t "anti_spam_enabled: ~a~%"
+                                       (serialize-boolean
+                                        (assoc-ref mailbox "antiSpamEnabled")))
+                               (format #t "spam_filter_action: ~a~%"
+                                       (assoc-ref mailbox "spamFilterAction"))
+                               (format #t "locked: ~a~%"
+                                       (serialize-boolean
+                                        (assoc-ref mailbox "locked")))
+                               (format #t "uid: ~a~%"
+                                       (assoc-ref mailbox "uid"))
+                               (newline))
+                             (account-mailbox->scm account)))
+                 args))
 
       ((show)
        (serialize-args format-user))
