@@ -46,6 +46,10 @@ Fetch data about user.\n"))
   (display (G_ "The valid values for ACTION are:\n"))
   (newline)
   (display (G_ "\
+   database              show database on account\n"))
+  (display (G_ "\
+   database-user         show database users on account\n"))
+  (display (G_ "\
    domain                show domains on account\n"))
   (display (G_ "\
    dump                  dump all available information\n"))
@@ -128,7 +132,8 @@ numbers, etc.) to names.") #f #f
       (alist-cons 'argument arg result)
       (let ((action (string->symbol arg)))
         (case action
-          ((domain dump history mailbox search service show open unix website)
+          ((database database-user domain dump history mailbox search service
+            show open unix website)
            (alist-cons 'action action result))
           (else (leave (G_ "~a: unknown action~%") action))))))
 
@@ -173,6 +178,17 @@ numbers, etc.) to names.") #f #f
 
 (define (account-mailbox->scm account)
   (map hash-table->alist (json-string->scm (account-mailbox account))))
+
+(define (account-database account)
+  (let-values (((response body)
+                (http-get (string-append "https://api.majordomo.ru/" account "/database")
+                          #:headers `((content-type . (application/json))
+                                      (Authorization . ,(format #f "Bearer ~a" (auth))))
+                          #:keep-alive? #t)))
+    (utf8->string body)))
+
+(define (account-database->scm account)
+  (map hash-table->alist (json-string->scm (account-database account))))
 
 (define (resolve-subcommand name)
   (let ((module (resolve-interface
@@ -292,6 +308,77 @@ argument list and OPTS is the option alist."
       (newline))
 
     (case command
+      ((database)
+       (for-each (lambda (account)
+                   (for-each (lambda (database)
+                               (format #t "quota_used: ~a~%"
+                                       (assoc-ref database "quotaUsed"))
+                               (format #t "will_be_deleted: ~a~%"
+                                       (serialize-boolean
+                                        (assoc-ref database "willBeDeleted")))
+                               (format #t "id: ~a~%"
+                                       (assoc-ref database "id"))
+                               (format #t "quota: ~a~%"
+                                       (assoc-ref database "quota"))
+                               (format #t "name: ~a~%"
+                                       (assoc-ref database "name"))
+                               (format #t "account_id: ~a~%"
+                                       (assoc-ref database "accountId"))
+                               (format #t "switched_on: ~a~%"
+                                       (serialize-boolean
+                                        (assoc-ref database "switchedOn")))
+                               (format #t "type: ~a~%"
+                                       (assoc-ref database "type"))
+                               (format #t "type: ~a~%"
+                                       (assoc-ref database "@type"))
+                               (format #t "service_id: ~a~%"
+                                       (assoc-ref database "serviceId"))
+                               (format #t "writable: ~a~%"
+                                       (serialize-boolean
+                                        (assoc-ref database "writable")))
+                               (format #t "locked: ~a~%"
+                                       (serialize-boolean
+                                        (assoc-ref database "locked")))
+                               (newline))
+                             (account-database->scm account)))
+            args))
+
+      ((database-user)
+       (for-each (lambda (account)
+                   (for-each (lambda (database)
+                               (for-each (lambda (user)
+                                           (format #t "will_be_deleted: ~a~%"
+                                                   (serialize-boolean
+                                                    (assoc-ref user "willBeDeleted")))
+                                           (format #t "id: ~a~%"
+                                                   (assoc-ref user "id"))
+                                           (format #t "max_cpu_time_per_second: ~a~%"
+                                                   (assoc-ref user "maxCpuTimePerSecond"))
+                                           (format #t "name: ~a~%"
+                                                   (assoc-ref user "name"))
+                                           (format #t "account_id: ~a~%"
+                                                   (assoc-ref user "accountId"))
+                                           (format #t "switched_on: ~a~%"
+                                                   (serialize-boolean
+                                                    (assoc-ref user "switchedOn")))
+                                           (format #t "type: ~a~%"
+                                                   (assoc-ref user "type"))
+                                           (format #t "type: ~a~%"
+                                                   (assoc-ref user "@type"))
+                                           (format #t "serviceId: ~a~%"
+                                                   (assoc-ref user "serviceId"))
+                                           (format #t "allowed_ip_addresses: ~a~%"
+                                                   (assoc-ref user "allowedIPAddresses"))
+                                           (format #t "password_hash: ~a~%"
+                                                   (assoc-ref user "passwordHash"))
+                                           (format #t "locked: ~a~%"
+                                                   (serialize-boolean
+                                                    (assoc-ref user "locked")))
+                                           (newline))
+                                         (assoc-ref database "databaseUsers")))
+                             (account-database->scm account)))
+                 args))
+
       ((dump)
        (serialize-args format-user)
        (serialize-args
