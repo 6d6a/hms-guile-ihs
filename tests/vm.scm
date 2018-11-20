@@ -1,5 +1,5 @@
 ;;; Guile IHS --- IHS command-line interface.
-;;; Copyright © 2018 Oleg Pykhalov <go.wigust@gmail.com>
+;;; Copyright © 2018, 2019 Oleg Pykhalov <go.wigust@gmail.com>
 ;;;
 ;;; This file is part of Guile IHS.
 ;;;
@@ -24,7 +24,8 @@
   #:use-module (srfi srfi-64))
 
 (define test-vm-json
-  "{
+  (list "\
+{
   \"success\": true,
   \"vds_account\": {
     \"restricted\": false,
@@ -139,15 +140,43 @@
     \"abonement_cost\": 23880,
     \"can_delete\": true
   }
-}")
+}"
+          "\
+{
+    \"success\": true,
+    \"vds_passwords\": [
+        {
+            \"vds_password_id\": \"13758\",
+            \"vds_account_id\": \"17803\",
+            \"login\": \"root\",
+            \"password\": \"qwerty\",
+            \"subject\": \"\\u00d0\\u0094\\u00d0\\u00be\\u00d1\\u0081\\u00d1\\u0082\\u00d1\\u0083\\u00d0\\u00bf \\u00d0\\u00ba \\u00d1\\u0081\\u00d0\\u00b5\\u00d1\\u0080\\u00d0\\u00b2\\u00d0\\u00b5\\u00d1\\u0080\\u00d1\\u0083 \\u00d0\\u00bf\\u00d0\\u00be SSH\"
+        },
+        {
+            \"vds_password_id\": \"13759\",
+            \"vds_account_id\": \"17803\",
+            \"login\": \"vm17803\",
+            \"password\": \"qwerty\",
+            \"subject\": \"ssh\"
+        },
+        {
+            \"vds_password_id\": \"21028\",
+            \"vds_account_id\": \"17803\",
+            \"login\": \"vm17803\",
+            \"password\": \"qwerty\",
+            \"subject\": \"backup_account\"
+        }
+    ]
+}"))
 
 (test-begin "vm")
 
 (test-assert "ihs-vm"
   (mock ((ihs scripts vm) fetch-vm
-         (match-lambda
-           ("vm12345" test-vm-json)
-           (_ (error "Nonexistent account: " account))))
+         (lambda (account)
+           (match account
+             ("vm12345" test-vm-json)
+             (_ (error "Nonexistent account: " account)))))
         (and (string=? (with-output-to-string
                          (lambda ()
                            (ihs-vm "show" "vm12345")))

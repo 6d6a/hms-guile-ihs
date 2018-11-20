@@ -1,5 +1,5 @@
 ;;; Guile IHS --- IHS command-line interface.
-;;; Copyright © 2018 Oleg Pykhalov <go.wigust@gmail.com>
+;;; Copyright © 2018, 2019 Oleg Pykhalov <go.wigust@gmail.com>
 ;;;
 ;;; This file is part of Guile IHS.
 ;;;
@@ -50,6 +50,8 @@ Fetch data about user.\n"))
   (display (G_ "\
    ip                    show ip address\n"))
   (display (G_ "\
+   passwords             show passwords\n"))
+  (display (G_ "\
    plan                  show account plan\n"))
   (display (G_ "\
    server                show server\n"))
@@ -81,11 +83,19 @@ numbers, etc.) to names.") #f #f
   (let* ((port   (apply open-pipe* OPEN_READ %cvm (list account)))
          (output (read-string port)))
     (close-port port)
-    (string-trim-right output #\newline)))
+    (delete "" (string-split output #\newline))))
 
 (define (vm->scm account)
-  (assoc-ref (hash-table->alist (json-string->scm (fetch-vm account)))
+  (assoc-ref (hash-table->alist (json-string->scm (match (fetch-vm account)
+                                                    ((account password)
+                                                     account))))
              "vds_account"))
+
+(define (passwords->scm account)
+  (assoc-ref (hash-table->alist (json-string->scm (match (fetch-vm account)
+                                                    ((account password)
+                                                     password))))
+             "vds_passwords"))
 
 (define (parse-sub-command arg result)
   ;; Parse sub-command ARG and augment RESULT accordingly.
@@ -93,7 +103,7 @@ numbers, etc.) to names.") #f #f
       (alist-cons 'argument arg result)
       (let ((action (string->symbol arg)))
         (case action
-          ((dump ip plan server show template)
+          ((dump ip passwords plan server show template)
            (alist-cons 'action action result))
           (else (leave (G_ "~a: unknown action~%") action))))))
 
@@ -125,7 +135,8 @@ numbers, etc.) to names.") #f #f
     (format #t "uri: ~a~%" (assoc-ref template "path")))
 
   (for-each (lambda (arg)
-              (let ((vds-account (vm->scm arg)))
+              (let ((vds-account (vm->scm arg))
+                    (vds-passwords (passwords->scm arg)))
                 (case command
                   ((dump)
                    (format-account vds-account)
@@ -152,6 +163,21 @@ numbers, etc.) to names.") #f #f
                    (newline))
                   ((template)
                    (format-template (assoc-ref vds-account "template"))
+                   (newline))
+                  ((passwords)
+
+                   (if (string-prefix? "A-"
+                                       (assoc-ref (assoc-ref vds-account "plan") "name"))
+                       '()
+                       (for-each (lambda (vds-password)
+                                   (format #t "~a ~a ~a ~a"
+                                           (assoc-ref vds-account "name")
+                                           (assoc-ref (assoc-ref vds-account "primary_ip_address")
+                                                      "address")
+                                           (assoc-ref vds-password "login")
+                                           (assoc-ref vds-password "password"))
+                                   (newline))
+                                 vds-passwords))
                    (newline)))))
             args))
 
