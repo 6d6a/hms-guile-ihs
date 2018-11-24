@@ -519,31 +519,7 @@ argument list and OPTS is the option alist."
        (serialize-website-args format-unix))
 
       ((open)
-       (for-each (lambda (account)
-                   (let-values (((response body)
-                                 (http-post (string-append "https://api.majordomo.ru/si/web-access-accounts/"
-                                                           account
-                                                           "/create_token")
-                                            #:headers `((content-type . (application/json))
-                                                        (Authorization . ,(format #f "Bearer ~a" (auth))))
-                                            #:body "{}"
-                                            #:keep-alive? #t)))
-                     (let ((json (hash-table->alist (json-string->scm (utf8->string body)))))
-                       ;; TODO: Open browser for all accounts in parallel
-                       (for-each (match-lambda
-                                   (("token" records ...)
-                                    (let ((account-profile (string-append "/tmp/" account)))
-                                      (format #t "Open account: ~a~%" account)
-                                      (mkdir-p account-profile)
-                                      (system* "firefox" "--new-instance"
-                                               "--profile" account-profile
-                                               "--private-window"
-                                               (string-append "https://hms.majordomo.ru/login"
-                                                              "?bearer=" (assoc-ref records "access_token")
-                                                              "&refresh=" (assoc-ref records "refresh_token")))))
-                                   (_ #f))
-                                 (assoc-ref json "params")))))
-                 args))
+       (apply (resolve-subcommand "open") args))
 
       ((domain)
        (serialize-websites-args
