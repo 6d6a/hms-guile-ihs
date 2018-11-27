@@ -21,11 +21,14 @@
   #:use-module ((guix ui) #:select (G_ leave))
   #:use-module (guix build utils)
   #:use-module (guix import utils)
+  #:use-module (guix records)
   #:use-module (ihs scripts)
   #:use-module (ihs ui)
   #:use-module (json)
   #:use-module (rnrs bytevectors)
   #:use-module (ice-9 match)
+  #:use-module (ice-9 popen)
+  #:use-module (ice-9 rdelim)
   #:use-module (srfi srfi-1)
   #:use-module (srfi srfi-11)
   #:use-module (srfi srfi-26)
@@ -38,6 +41,65 @@
 
             account-websites
             account-websites->scm))
+
+(define ihs-user
+  (getenv "IHS_USER"))
+
+(define ihs-password
+  (getenv "IHS_PASS"))
+
+(define* (auth #:key (user ihs-user) (pass ihs-password))
+  (letrec-syntax ((option (syntax-rules ()
+                            ((_ key value)
+                             (if value
+                                 (list (string-append key "=" value))
+                                 '()))))
+                  (key/value (syntax-rules ()
+                               ((_ (key value) rest ...)
+                                (append (option key value)
+                                        (key/value rest ...)))
+                               ((_)
+                                '()))))
+    (assoc-ref (let-values
+                   (((response body)
+                     (http-post "https://api.majordomo.ru/oauth/token"
+                                #:headers `((content-type . (application/x-www-form-urlencoded)))
+                                #:keep-alive? #t
+                                #:body (string-join (key/value ("grant_type" "password")
+                                                               ("client_id" "frontend_app")
+                                                               ("client_secret" "frontend_app_secret")
+                                                               ("username" user)
+                                                               ("password" pass))
+                                                    "&"))))
+                 (hash-table->alist (json-string->scm (utf8->string body))))
+               "access_token")))
+
+(define (quote-string str)
+  (string-append "\"" str "\""))
+
+(define-record-type* <website>
+  website make-website
+  website?
+  (name                   website-name                   ;string
+                          (default ""))
+  (document-root          website-document-root          ;string
+                          (default ""))
+  (auto-sub-domain?       website-auto-sub-domain        ;boolean
+                          (default ""))
+  (index-file-list        website-index-file-list        ;string
+                          (default ""))
+  (static-file-extensions website-static-file-extensions ;string
+                          (default ""))
+  (cgi-enabled?           website-cgi-enabled            ;boolean
+                          (default ""))
+  (cgi-file-extensions    website-cgi-file-extensions    ;string
+                          (default ""))
+  (infected?              website-infected               ;infected?
+                          (default ""))
+  (ddos-protection?       website-ddos-protection        ;boolean
+                          (default ""))
+  (quota                  website-quota                  ;string
+                          (default "")))
 
 (define (show-help)
   (display (G_ "Usage: ihs account [OPTION ...] ACTION [ARG ...]
@@ -77,13 +139,13 @@ Fetch data about user.\n"))
 (define %options
   ;; Specifications of the command-line options.
   (list (option '(#\h "help") #f #f
-                 (lambda args
-                   (show-help)
-                   (exit 0)))
+                (lambda args
+                  (show-help)
+                  (exit 0)))
         (option '(#\n "Don't convert addresses (i.e., host addresses, port
 numbers, etc.) to names.") #f #f
-                (lambda (opt name arg result)
-                  (alist-cons 'do-not-resolve? #t result)))))
+(lambda (opt name arg result)
+  (alist-cons 'do-not-resolve? #t result)))))
 
 (define %default-options '())
 
@@ -91,6 +153,33 @@ numbers, etc.) to names.") #f #f
 ;;;
 ;;; Entry point.
 ;;;
+
+(define-record-type* <account-action>
+  account-action
+  make-account-action
+  account-action?
+  ;; (account-id   account-action-account-id   ;string
+  ;;               (default #f))
+  (action-id    account-action-action-id
+                (default #f))
+  (operation-id account-action-operation-id ;string
+                (default #f))
+  ;; (object-ref   account-action-object-ref
+  ;;               (default #f))
+  (parameters   account-action-parameters   ;list of <account-action-params>
+                (default '()))
+  )
+
+(define-record-type* <account-action-parameter>
+  account-action-parameter
+  make-account-action-parameter
+  account-action-parameter?
+  (ddos-protection account-action-parameter-ddos-protection ;boolean
+                   (default #f))
+  (resource-id     account-action-parameter-resource-id     ;string
+                   (default #f))
+  (success         account-action-parameter-success         ;boolean
+                   (default #f)))
 
 (define (domain->ip domain)
   (let ((radix 2))
@@ -135,7 +224,7 @@ numbers, etc.) to names.") #f #f
       (let ((action (string->symbol arg)))
         (case action
           ((database database-user domain dump ftp history mailbox search
-                     panel service show unix website)
+                     service show open unix website block unblock)
            (alist-cons 'action action result))
           (else (leave (G_ "~a: unknown action~%") action))))))
 
@@ -150,14 +239,59 @@ numbers, etc.) to names.") #f #f
                           #:keep-alive? #t)))
     (utf8->string body)))
 
+(define* (website-ddos account website #:key block?)
+  "Block WEBSITE by id in ACCOUNT."
+  (let* ((port
+          (open-pipe (string-join
+                      (list
+                       "curl" "-s"
+                       (quote-string (string-append "https://api.majordomo.ru/pm/"
+                                                    account"/website/" website))
+                       "-X" "PATCH"
+                       "-H" (quote-string (format #f "Accept: ~a" "application/json"))
+                       "-H" (quote-string (format #f "content-type: ~a" "application/json"))
+                       "-H" (quote-string (format #f "authorization: ~a"
+                                                  (format #f "Bearer ~a" (auth))))
+                       "-H" (quote-string (format #f "Connection: ~a" "keep-alive"))
+                       "--data"
+                       "'{\"operationIdentity\":null,\"params\":{\"ddosProtection\":"
+                       (if block? "true" "false")
+                       "}}'"))
+                     OPEN_READ))
+         (output (read-string port))
+         (action-record
+          (alist->record (hash-table->alist
+                          (json-string->scm (string-trim-right output
+                                                               #\newline)))
+                         make-account-action
+                         '("actionIdentity" "operationIdentity" "params")))
+         (action
+          (account-action
+           (action-id (account-action-action-id action-record))
+           (operation-id (account-action-operation-id action-record))
+           (parameters (alist->record (account-action-parameters action-record)
+                                      make-account-action-parameter
+                                      '("ddosProtection" "resourceId" "success"))))))
+    (close-port port)
+    (match action
+      (($ <account-action> action-id operation-id parameters)
+       (format #t "action_id: ~a~%" action-id)
+       (format #t "operation_id: ~a~%" operation-id)
+       (match parameters
+         (($ <account-action-parameter> ddos-protection resource-id success)
+          (format #t "ddos_protection: ~a~%" (serialize-boolean ddos-protection))
+          (format #t "resource_id: ~a~%" resource-id)
+          (format #t "success: ~a~%" (serialize-boolean success))))
+       (newline)))))
+
 (define (account->scm account)
   (hash-table->alist (json-string->scm (fetch-account account))))
 
 (define (serialize-account account)
-    (if (string-prefix? "ac" account)
-        (string-take-right account (- (string-length account)
-                                      (string-length "ac_")))
-        account))
+  (if (string-prefix? "ac" account)
+      (string-take-right account (- (string-length account)
+                                    (string-length "ac_")))
+      account))
 
 (define (account-websites account)
   (let-values (((response body)
@@ -206,7 +340,7 @@ numbers, etc.) to names.") #f #f
 (define (resolve-subcommand name)
   (let ((module (resolve-interface
                  `(ihs scripts web ,(string->symbol name))))
-        (proc (string->symbol (string-append "ihs-web-" name))))
+        (proc (string->symbol (string-append "ihs-account-" name))))
     (module-ref module proc)))
 
 (define (process-command command args opts)
@@ -350,7 +484,7 @@ argument list and OPTS is the option alist."
                                         (assoc-ref database "locked")))
                                (newline))
                              (account-database->scm account)))
-            args))
+                 args))
 
       ((database-user)
        (for-each (lambda (account)
@@ -514,8 +648,52 @@ argument list and OPTS is the option alist."
       ((unix)
        (serialize-website-args format-unix))
 
-      ((panel)
-       (apply (resolve-subcommand "panel") args))
+      ((open)
+       (for-each (lambda (account)
+                   (let-values (((response body)
+                                 (http-post (string-append "https://api.majordomo.ru/si/web-access-accounts/"
+                                                           account
+                                                           "/create_token")
+                                            #:headers `((content-type . (application/json))
+                                                        (Authorization . ,(format #f "Bearer ~a" (auth))))
+                                            #:body "{}"
+                                            #:keep-alive? #t)))
+                     (let ((json (hash-table->alist (json-string->scm (utf8->string body)))))
+                       ;; TODO: Open browser for all accounts in parallel
+                       (for-each (match-lambda
+                                   (("token" records ...)
+                                    (let ((account-profile (string-append "/tmp/" account)))
+                                      (format #t "Open account: ~a~%" account)
+                                      (mkdir-p account-profile)
+                                      (system* "firefox" "--new-instance"
+                                               "--profile" account-profile
+                                               "--private-window"
+                                               (string-append "https://hms.majordomo.ru/login"
+                                                              "?bearer=" (assoc-ref records "access_token")
+                                                              "&refresh=" (assoc-ref records "refresh_token")))))
+                                   (_ #f))
+                                 (assoc-ref json "params")))))
+                 args))
+
+      ((block)
+       (for-each (lambda (account)
+                   (for-each (lambda (website)
+                               (let ((website (assoc-ref website "id")))
+                                 (website-ddos account website
+                                               #:block? #t)))
+                             (account-websites->scm account)))
+                 args))
+
+      ((unblock)
+       (for-each (lambda (account)
+                   (for-each (lambda (website)
+                               (let ((website-id (assoc-ref website "id"))
+                                     (website-name (assoc-ref website "name")))
+                                 ;; (format #t "Unblock: ~a ~a~%" website-name website-id)
+                                 (website-ddos account website-id
+                                               #:block? #f)))
+                             (account-websites->scm account)))
+                 args))
 
       ((domain)
        (serialize-websites-args

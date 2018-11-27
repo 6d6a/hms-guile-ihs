@@ -35,38 +35,6 @@
             auth
             ihs-main))
 
-(define ihs-user
-  (getenv "IHS_USER"))
-
-(define ihs-password
-  (getenv "IHS_PASS"))
-
-(define* (auth #:key (user ihs-user) (pass ihs-password))
-  (letrec-syntax ((option (syntax-rules ()
-                            ((_ key value)
-                             (if value
-                                 (list (string-append key "=" value))
-                                 '()))))
-                  (key/value (syntax-rules ()
-                               ((_ (key value) rest ...)
-                                (append (option key value)
-                                        (key/value rest ...)))
-                               ((_)
-                                '()))))
-    (assoc-ref (let-values
-                   (((response body)
-                     (http-post "https://api.majordomo.ru/oauth/token"
-                                #:headers `((content-type . (application/x-www-form-urlencoded)))
-                                #:keep-alive? #t
-                                #:body (string-join (key/value ("grant_type" "password")
-                                                               ("client_id" "frontend_app")
-                                                               ("client_secret" "frontend_app_secret")
-                                                               ("username" user)
-                                                               ("password" pass))
-                                                    "&"))))
-                 (hash-table->alist (json-string->scm (utf8->string body))))
-               "access_token")))
-
 
 ;;;
 ;;; UI
