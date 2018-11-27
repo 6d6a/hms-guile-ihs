@@ -414,8 +414,6 @@ static_file_extensions: avi bz2 css gif gz jpg js mp3 mpeg ogg png rar svg swf z
 cgi_enabled: false
 cgi_file_extensions: cgi pl
 infected: false
-writable: false
-sendmail_allowed: false
 ddos_protection: false
 
 ")

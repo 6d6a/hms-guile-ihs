@@ -271,10 +271,6 @@ argument list and OPTS is the option alist."
               (string-join (assoc-ref website "cgiFileExtensions")))
       (format #t "infected: ~a~%"
               (serialize-boolean (assoc-ref website "infected")))
-      (format #t "writable: ~a~%"
-              (serialize-boolean (assoc-ref website "writable")))
-      (format #t "sendmail_allowed: ~a~%"
-              (serialize-boolean (assoc-ref website "sendmailAllowed")))
       (format #t "ddos_protection: ~a~%"
               (serialize-boolean (assoc-ref website "ddosProtection")))
       (newline))
