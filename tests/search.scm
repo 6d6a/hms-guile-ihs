@@ -1,26 +1,26 @@
-;;; Guile GMS --- GMS command-line interface.
+;;; Guile IHS --- IHS command-line interface.
 ;;; Copyright © 2018 Oleg Pykhalov <go.wigust@gmail.com>
 ;;;
-;;; This file is part of Guile GMS.
+;;; This file is part of Guile IHS.
 ;;;
-;;; Guile GMS is free software; you can redistribute it and/or modify it under
+;;; Guile IHS is free software; you can redistribute it and/or modify it under
 ;;; the terms of the GNU General Public License as published by the Free
 ;;; Software Foundation; either version 3 of the License, or (at your option)
 ;;; any later version.
 ;;;
-;;; Guile GMS is distributed in the hope that it will be useful, but WITHOUT
+;;; Guile IHS is distributed in the hope that it will be useful, but WITHOUT
 ;;; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
 ;;; FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
 ;;; more details.
 ;;;
 ;;; You should have received a copy of the GNU General Public License along
-;;; with Guile GMS.  If not, see <http://www.gnu.org/licenses/>.
+;;; with Guile IHS.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (test-search)
   #:use-module (guix tests)
-  #:use-module (gms scripts)
-  #:use-module (gms scripts account)
-  #:use-module (gms scripts account search)
+  #:use-module (ihs scripts)
+  #:use-module (ihs scripts web)
+  #:use-module (ihs scripts web search)
   #:use-module (ice-9 match)
   #:use-module (srfi srfi-64))
 
@@ -845,15 +845,15 @@
 
 (test-begin "search")
 
-(test-assert "gms-search-owner"
-  (mock ((gms scripts account search) search-owner
+(test-assert "ihs-search-owner"
+  (mock ((ihs scripts web search) search-owner
          (lambda (owner)
            (match owner
              ("go.wigust@gmail.com" test-search-owner-json)
              (_ (error "Nonexistent owner: " owner)))))
         (string=? (with-output-to-string
                         (lambda ()
-                          (gms-account-search "go.wigust@gmail.com")))
+                          (ihs-web-search "go.wigust@gmail.com")))
                       "\
 id: 5ac493018273dc00070a67f1
 account: 208112
@@ -862,30 +862,30 @@ type: INDIVIDUAL
 
 ")))
 
-(test-assert "gms-search-account"
-  (mock ((gms scripts account search) search-account
+(test-assert "ihs-search-account"
+  (mock ((ihs scripts web search) search-account
          (lambda (account)
            (match (serialize-account account)
              ("208112" test-search-account-json)
              (_ (error "Nonexistent account: " account)))))
         (string=? (with-output-to-string
                     (lambda ()
-                      (gms-account-search "ac_208112")))
+                      (ihs-web-search "ac_208112")))
                       "\
 created: 2018-04-04 11:55:29
 id: 208112
 
 ")))
 
-(test-assert "gms-search-domain"
-  (mock ((gms scripts account search) search-domain
+(test-assert "ihs-search-domain"
+  (mock ((ihs scripts web search) search-domain
          (lambda (domain)
            (match domain
              ("ac-208112.ru" test-search-domain-json)
              (_ (error "Nonexistent domain: " domain)))))
         (string=? (with-output-to-string
                     (lambda ()
-                      (gms-account-search "ac-208112.ru")))
+                      (ihs-web-search "ac-208112.ru")))
                       "\
 name: ac-208112.ru
 id: 5ac4a28837c47a00072b934f

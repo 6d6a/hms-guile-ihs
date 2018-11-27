@@ -1,39 +1,39 @@
-;;; Guile GMS --- GMS command-line interface.
+;;; Guile IHS --- IHS command-line interface.
 ;;; Copyright © 2018 Oleg Pykhalov <go.wigust@gmail.com>
 ;;;
-;;; This file is part of Guile GMS.
+;;; This file is part of Guile IHS.
 ;;;
-;;; Guile GMS is free software; you can redistribute it and/or modify
+;;; Guile IHS is free software; you can redistribute it and/or modify
 ;;; it under the terms of the GNU General Public License as published
 ;;; by the Free Software Foundation; either version 3 of the License,
 ;;; or (at your option) any later version.
 ;;;
-;;; Guile GMS is distributed in the hope that it will be useful, but
+;;; Guile IHS is distributed in the hope that it will be useful, but
 ;;; WITHOUT ANY WARRANTY; without even the implied warranty of
 ;;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 ;;; General Public License for more details.
 ;;;
 ;;; You should have received a copy of the GNU General Public License
-;;; along with Guile GMS.  If not, see <http://www.gnu.org/licenses/>.
+;;; along with Guile IHS.  If not, see <http://www.gnu.org/licenses/>.
 
-(define-module (gms config)
-  #:export (%gms-bug-report-address
-            %gms-home-page-url
-            %gms-package-name
-            %gms-version
+(define-module (ihs config)
+  #:export (%ihs-bug-report-address
+            %ihs-home-page-url
+            %ihs-package-name
+            %ihs-version
 
             %cvm))
 
-(define %gms-package-name
+(define %ihs-package-name
   "@PACKAGE_NAME@")
 
-(define %gms-bug-report-address
+(define %ihs-bug-report-address
   "go.wigust@gmail.com")
 
-(define %gms-home-page-url
+(define %ihs-home-page-url
   "@PACKAGE_URL@")
 
-(define %gms-version
+(define %ihs-version
   "@PACKAGE_VERSION@")
 
 (define %cvm

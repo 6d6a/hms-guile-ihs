@@ -1,25 +1,25 @@
-;;; Guile GMS --- GMS command-line interface.
+;;; Guile IHS --- IHS command-line interface.
 ;;; Copyright © 2018 Oleg Pykhalov <go.wigust@gmail.com>
 ;;;
-;;; This file is part of Guile GMS.
+;;; This file is part of Guile IHS.
 ;;;
-;;; Guile GMS is free software; you can redistribute it and/or modify it under
+;;; Guile IHS is free software; you can redistribute it and/or modify it under
 ;;; the terms of the GNU General Public License as published by the Free
 ;;; Software Foundation; either version 3 of the License, or (at your option)
 ;;; any later version.
 ;;;
-;;; Guile GMS is distributed in the hope that it will be useful, but WITHOUT
+;;; Guile IHS is distributed in the hope that it will be useful, but WITHOUT
 ;;; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
 ;;; FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
 ;;; more details.
 ;;;
 ;;; You should have received a copy of the GNU General Public License along
-;;; with Guile GMS.  If not, see <http://www.gnu.org/licenses/>.
+;;; with Guile IHS.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (test-server)
   #:use-module (guix tests)
-  #:use-module (gms scripts)
-  #:use-module (gms scripts server)
+  #:use-module (ihs scripts)
+  #:use-module (ihs scripts server)
   #:use-module (ice-9 match)
   #:use-module (srfi srfi-64))
 
@@ -4395,14 +4395,14 @@
 
 (test-begin "server")
 
-(test-assert "gms-server"
-  (mock ((gms scripts server) fetch-server
+(test-assert "ihs-server"
+  (mock ((ihs scripts server) fetch-server
          (lambda ()
            test-server-json))
         (begin (update-cache)
                (and (string=? (with-output-to-string
                                 (lambda ()
-                                  (gms-server "show" "web33")))
+                                  (ihs-server "show" "web33")))
 "\
 id: web_server_134
 name: web33
@@ -4411,7 +4411,7 @@ online: true
 ")
                     (string=? (with-output-to-string
                                 (lambda ()
-                                  (gms-server "service" "web33")))
+                                  (ihs-server "service" "web33")))
                               "\
 id: 134_mysql_service
 name: mysql@web33
@@ -4521,7 +4521,7 @@ name: apache2-php72-hardened_nochmod@web33
 ")
                     (string=? (with-output-to-string
                                 (lambda ()
-                                  (gms-server "storage" "web33")))
+                                  (ihs-server "storage" "web33")))
                               "\
 id: 59086e28719fca5b2880566b
 name: web33
@@ -4536,7 +4536,7 @@ capacity: 1.22/8000.0 GB
 ")
                     (string=? (with-output-to-string
                                 (lambda ()
-                                  (gms-server "socket" "web33")))
+                                  (ihs-server "socket" "web33")))
                     "\
 id: 134_mysql_socket
 name: mysql-mysql@web33

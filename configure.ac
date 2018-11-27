@@ -1,5 +1,5 @@
-AC_INIT([Guile-GMS], [0.0.1], [go.wigust@gmail.com], [guile-gms],
-  [https://majordomo.ru/])
+AC_INIT([Guile-IHS], [0.0.1], [go.wigust@gmail.com], [guile-ihs],
+  [https://www.example.com])
 
 PKG_CHECK_MODULES([GUILE], [guile-2.2])
 GUILE_PKG([2.2])
@@ -48,7 +48,7 @@ AC_PROG_SED
 
 AM_INIT_AUTOMAKE([foreign])
 AC_CONFIG_FILES([Makefile
-                 gms/config.scm])
+                 ihs/config.scm])
 
 AC_CONFIG_FILES([pre-inst-env:build-aux/pre-inst-env.in],
   [chmod +x pre-inst-env])

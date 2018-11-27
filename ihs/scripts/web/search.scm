@@ -16,13 +16,13 @@
 ;;; You should have received a copy of the GNU General Public License
 ;;; along with Guile GMS.  If not, see <http://www.gnu.org/licenses/>.
 
-(define-module (gms scripts account search)
+(define-module (ihs scripts web search)
   #:use-module ((guix scripts) #:select (parse-command-line))
   #:use-module ((guix ui) #:select (G_ leave))
   #:use-module (guix import utils)
-  #:use-module (gms scripts)
-  #:use-module (gms scripts account)
-  #:use-module (gms ui)
+  #:use-module (ihs scripts)
+  #:use-module (ihs scripts web)
+  #:use-module (ihs ui)
   #:use-module (json)
   #:use-module (rnrs bytevectors)
   #:use-module (ice-9 match)
@@ -30,13 +30,13 @@
   #:use-module (srfi srfi-11)
   #:use-module (srfi srfi-37)
   #:use-module (web client)
-  #:export (gms-account-search
+  #:export (ihs-web-search
             search-domain
             search-account
             search-owner))
 
 (define (show-help)
-  (display (G_ "Usage: gms server [OPTION ...] ACTION [ARG ...] [FILE]
+  (display (G_ "Usage: ihs server [OPTION ...] ACTION [ARG ...] [FILE]
 Fetch data about server.\n"))
   (newline)
   (display (G_ "The valid values for ACTION are:\n"))
@@ -129,7 +129,7 @@ Fetch data about server.\n"))
   (format #t "created: ~a~%" (assoc-ref account "created"))
   (format #t "id: ~a~%" (assoc-ref account "clientId")))
 
-(define (gms-account-search . args)
+(define (ihs-web-search . args)
   ;; TODO: with-error-handling
   (for-each (lambda (arg)
               (cond ((string-prefix? "ac_" (string-downcase arg))

@@ -1,28 +1,28 @@
-# Guile GMS --- GMS command-line interface.
+# Guile IHS --- IHS command-line interface.
 # Copyright © 2018 Oleg Pykhalov <go.wigust@gmail.com>
 #
-# This file is part of Guile GMS.
+# This file is part of Guile IHS.
 #
-# Guile GMS is free software; you can redistribute it and/or modify it
+# Guile IHS is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 3 of the License, or
 # (at your option) any later version.
 #
-# Guile GMS is distributed in the hope that it will be useful, but
+# Guile IHS is distributed in the hope that it will be useful, but
 # WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 # General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with Guile GMS.  If not, see <http://www.gnu.org/licenses/>.
+# along with Guile IHS.  If not, see <http://www.gnu.org/licenses/>.
 
-bin_SCRIPTS = scripts/gms
+bin_SCRIPTS = scripts/ihs
 
 # Handle substitution of fully-expanded Autoconf variables.
 do_subst = $(SED)					\
   -e 's,[@]GUILE[@],$(GUILE),g'
 
-scripts/gms: scripts/gms.in Makefile
+scripts/ihs: scripts/ihs.in Makefile
 	$(AM_V_at)rm -f $@ $@-t
 	$(AM_V_at)$(MKDIR_P) "$(@D)"
 	$(AM_V_GEN)$(do_subst) < "$(srcdir)/$@.in" > "$@-t"
@@ -33,17 +33,18 @@ AM_V_GUILEC_ = $(AM_V_GUILEC_$(AM_DEFAULT_VERBOSITY))
 AM_V_GUILEC_0 = @echo "  GUILEC     " $@;
 
 MODULES =					\
-  gms/ui.scm					\
-  gms/scripts.scm				\
-  gms/scripts/account.scm			\
-  gms/scripts/account/history.scm			\
-  gms/scripts/account/search.scm			\
-  gms/scripts/cerb.scm				\
-  gms/scripts/pull.scm				\
-  gms/scripts/server.scm			\
-  gms/scripts/vm.scm				\
-  gms/utils.scm					\
-  gms.scm
+  ihs/ui.scm					\
+  ihs/scripts.scm				\
+  ihs/scripts/web.scm				\
+  ihs/scripts/web/history.scm			\
+  ihs/scripts/web/panel.scm			\
+  ihs/scripts/web/search.scm			\
+  ihs/scripts/cerb.scm				\
+  ihs/scripts/pull.scm				\
+  ihs/scripts/server.scm			\
+  ihs/scripts/vm.scm				\
+  ihs/utils.scm					\
+  ihs.scm
 
 GO_FILES = $(MODULES:%.scm=%.go)
 
@@ -89,7 +90,7 @@ $(GO_FILES): %.go: %.scm
 TEST_EXTENSIONS = .scm
 
 SCM_TESTS =					\
-  tests/account.scm			\
+  tests/web.scm			\
   tests/search.scm			\
   tests/server.scm			\
   tests/vm.scm

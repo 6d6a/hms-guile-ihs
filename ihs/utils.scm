@@ -1,22 +1,22 @@
-;;; Guile GMS --- GMS command-line interface.
+;;; Guile IHS --- IHS command-line interface.
 ;;; Copyright © 2018 Oleg Pykhalov <go.wigust@gmail.com>
 ;;;
-;;; This file is part of Guile GMS.
+;;; This file is part of Guile IHS.
 ;;;
-;;; Guile GMS is free software; you can redistribute it and/or modify
+;;; Guile IHS is free software; you can redistribute it and/or modify
 ;;; it under the terms of the GNU General Public License as published
 ;;; by the Free Software Foundation; either version 3 of the License,
 ;;; or (at your option) any later version.
 ;;;
-;;; Guile GMS is distributed in the hope that it will be useful, but
+;;; Guile IHS is distributed in the hope that it will be useful, but
 ;;; WITHOUT ANY WARRANTY; without even the implied warranty of
 ;;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 ;;; General Public License for more details.
 ;;;
 ;;; You should have received a copy of the GNU General Public License
-;;; along with Guile GMS.  If not, see <http://www.gnu.org/licenses/>.
+;;; along with Guile IHS.  If not, see <http://www.gnu.org/licenses/>.
 
-(define-module (gms utils)
+(define-module (ihs utils)
   #:use-module ((guix build utils) #:select (mkdir-p))
   #:use-module (srfi srfi-26)
   #:export (config-directory
@@ -33,7 +33,7 @@ environment variable name like \"XDG_CONFIG_HOME\"; SUFFIX is a suffix like
                         (and=> (or (getenv "HOME")
                                    (passwd:dir (getpwuid (getuid))))
                                (cut string-append <> suffix)))
-                    (cut string-append <> "/gms"))))
+                    (cut string-append <> "/ihs"))))
     (when ensure?
       (mkdir-p dir))
     dir))

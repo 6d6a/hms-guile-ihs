@@ -1,25 +1,25 @@
-;;; Guile GMS --- GMS command-line interface.
+;;; Guile IHS --- IHS command-line interface.
 ;;; Copyright © 2018 Oleg Pykhalov <go.wigust@gmail.com>
 ;;;
-;;; This file is part of Guile GMS.
+;;; This file is part of Guile IHS.
 ;;;
-;;; Guile GMS is free software; you can redistribute it and/or modify
+;;; Guile IHS is free software; you can redistribute it and/or modify
 ;;; it under the terms of the GNU General Public License as published
 ;;; by the Free Software Foundation; either version 3 of the License,
 ;;; or (at your option) any later version.
 ;;;
-;;; Guile GMS is distributed in the hope that it will be useful, but
+;;; Guile IHS is distributed in the hope that it will be useful, but
 ;;; WITHOUT ANY WARRANTY; without even the implied warranty of
 ;;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ;;; GNU General Public License for more details.
 ;;;
 ;;; You should have received a copy of the GNU General Public License
-;;; along with Guile GMS.  If not, see <http://www.gnu.org/licenses/>.
+;;; along with Guile IHS.  If not, see <http://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 
 ;; This file contains Guix package for development version of
-;; Guile GMS.  To build or install, run:
+;; Guile IHS.  To build or install, run:
 ;;
 ;;   guix build --file=guix.scm
 ;;   guix package --install-from-file=guix.scm
@@ -55,10 +55,10 @@ newspace."
 (define (current-commit)
   (git-output "log" "-n" "1" "--pretty=format:%H"))
 
-(define guile-gms
+(define guile-ihs
   (let ((commit (current-commit)))
     (package
-      (name "guile-gms")
+      (name "guile-ihs")
       (version (string-append "0.0.1" "-" (string-take commit 7)))
       (source (local-file %source-dir
                           #:recursive? #t
@@ -101,7 +101,7 @@ newspace."
                                     deps)
                                ":")))
 
-                 (wrap-program (string-append out "/bin/gms")
+                 (wrap-program (string-append out "/bin/ihs")
                    `("GUILE_LOAD_PATH" ":" prefix (,path))
                    `("GUILE_LOAD_COMPILED_PATH" ":" prefix (,gopath)))
 
@@ -122,6 +122,6 @@ newspace."
        "This package provides a Guile interface to Majordomo API.")
       (license license:gpl3+))))
 
-guile-gms
+guile-ihs
 
 ;;; guix.scm ends here

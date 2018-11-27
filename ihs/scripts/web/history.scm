@@ -1,27 +1,27 @@
-;;; Guile GMS --- GMS command-line interface.
+;;; Guile IHS --- IHS command-line interface.
 ;;; Copyright © 2018 Oleg Pykhalov <go.wigust@gmail.com>
 ;;;
-;;; This file is part of Guile GMS.
+;;; This file is part of Guile IHS.
 ;;;
-;;; Guile GMS is free software; you can redistribute it and/or modify
+;;; Guile IHS is free software; you can redistribute it and/or modify
 ;;; it under the terms of the GNU General Public License as published
 ;;; by the Free Software Foundation; either version 3 of the License,
 ;;; or (at your option) any later version.
 ;;;
-;;; Guile GMS is distributed in the hope that it will be useful, but
+;;; Guile IHS is distributed in the hope that it will be useful, but
 ;;; WITHOUT ANY WARRANTY; without even the implied warranty of
 ;;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 ;;; General Public License for more details.
 ;;;
 ;;; You should have received a copy of the GNU General Public License
-;;; along with Guile GMS.  If not, see <http://www.gnu.org/licenses/>.
+;;; along with Guile IHS.  If not, see <http://www.gnu.org/licenses/>.
 
-(define-module (gms scripts account history)
+(define-module (ihs scripts web history)
   #:use-module ((guix scripts) #:select (parse-command-line))
   #:use-module ((guix ui) #:select (G_ leave))
   #:use-module (guix import utils)
-  #:use-module (gms scripts)
-  #:use-module (gms ui)
+  #:use-module (ihs scripts)
+  #:use-module (ihs ui)
   #:use-module (json)
   #:use-module (rnrs bytevectors)
   #:use-module (ice-9 match)
@@ -29,10 +29,10 @@
   #:use-module (srfi srfi-11)
   #:use-module (srfi srfi-37)
   #:use-module (web client)
-  #:export (gms-account-history))
+  #:export (ihs-web-history))
 
 (define (show-help)
-  (display (G_ "Usage: gms history [OPTION ...] ACTION [ARG ...]
+  (display (G_ "Usage: ihs history [OPTION ...] ACTION [ARG ...]
 Fetch history about a user.\n"))
   (newline)
   (display (G_ "The valid values for ACTION are:\n"))
@@ -75,7 +75,7 @@ Fetch history about a user.\n"))
   (hash-table->alist (json-string->scm (fetch-history #:account account
                                                       #:page page))))
 
-(define (gms-account-history . args)
+(define (ihs-web-history . args)
   ;; TODO: with-error-handling
   (let* ((history (history->scm #:account (car args)))
          (pages (assoc-ref history "totalPages")))

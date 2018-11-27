@@ -1,11 +1,11 @@
-(define-module (gms scripts cerb)
+(define-module (ihs scripts cerb)
   #:use-module ((guix ui) #:select (G_ leave))
   #:use-module (ice-9 popen)
   #:use-module (ice-9 rdelim)
   #:use-module (ice-9 match)
   #:use-module (srfi srfi-1)
   #:use-module (srfi srfi-37)
-  #:export (gms-cerb))
+  #:export (ihs-cerb))
 
 (define info-source
   (or (getenv "CERB_HOST") "192.168.105.122"))
@@ -20,7 +20,7 @@
   (or (getenv "DISPLAY") ":1"))
 
 (define (show-help)
-  (display (G_ "Usage: gms account [OPTION ...] ACTION [ARG ...]
+  (display (G_ "Usage: ihs account [OPTION ...] ACTION [ARG ...]
 Fetch data about user.\n"))
   (newline)
   (newline)
@@ -65,7 +65,7 @@ Fetch data about user.\n"))
 ;;; Entry point.
 ;;;
 
-(define (gms-cerb . args)
+(define (ihs-cerb . args)
   (define* (format-meta #:key from time to box)
     (format #t "time: ~a~%" time)
     (format #t "from: ~a~%" from)

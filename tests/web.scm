@@ -1,26 +1,26 @@
-;;; Guile GMS --- GMS command-line interface.
+;;; Guile IHS --- IHS command-line interface.
 ;;; Copyright © 2018 Oleg Pykhalov <go.wigust@gmail.com>
 ;;;
-;;; This file is part of Guile GMS.
+;;; This file is part of Guile IHS.
 ;;;
-;;; Guile GMS is free software; you can redistribute it and/or modify it under
+;;; Guile IHS is free software; you can redistribute it and/or modify it under
 ;;; the terms of the GNU General Public License as published by the Free
 ;;; Software Foundation; either version 3 of the License, or (at your option)
 ;;; any later version.
 ;;;
-;;; Guile GMS is distributed in the hope that it will be useful, but WITHOUT
+;;; Guile IHS is distributed in the hope that it will be useful, but WITHOUT
 ;;; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
 ;;; FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
 ;;; more details.
 ;;;
 ;;; You should have received a copy of the GNU General Public License along
-;;; with Guile GMS.  If not, see <http://www.gnu.org/licenses/>.
+;;; with Guile IHS.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (test-account)
   #:use-module (guix tests)
-  #:use-module (gms scripts)
-  #:use-module (gms scripts account)
-  #:use-module ((gms scripts server) #:select (update-cache))
+  #:use-module (ihs scripts)
+  #:use-module (ihs scripts web)
+  #:use-module ((ihs scripts server) #:select (update-cache))
   #:use-module (ice-9 match)
   #:use-module (srfi srfi-64))
 
@@ -381,19 +381,19 @@
 
 (test-begin "account")
 
-(test-assert "gms-website"
-  (mock ((gms scripts account) account-websites
+(test-assert "ihs-website"
+  (mock ((ihs scripts web) account-websites
          (lambda (account)
            (match (serialize-account account)
              ("208112" test-website-json)
              (_ (error "Nonexistent account: " account)))))
-        (mock ((gms scripts server) fetch-server
+        (mock ((ihs scripts server) fetch-server
                (lambda ()
                  test-server-json))
               (begin (update-cache)
                      (and (string=? (with-output-to-string
                                       (lambda ()
-                                        (gms-account "unix" "ac_208112")))
+                                        (ihs-web "unix" "ac_208112")))
                                     "\
 quota: 0.48/10.0 GB
 server_id: web_server_134
@@ -404,7 +404,7 @@ home_dir: /home/u7590
 ")
                           (string=? (with-output-to-string
                                       (lambda ()
-                                        (gms-account "website" "ac_208112")))
+                                        (ihs-web "website" "ac_208112")))
                                     "\
 name: ac-208112.ru
 document_root: ac-208112.ru/www
@@ -421,7 +421,7 @@ ddos_protection: false
 ")
                           (string=? (with-output-to-string
                                       (lambda ()
-                                        (gms-account "domain" "-n" "ac_208112")))
+                                        (ihs-web "domain" "-n" "ac_208112")))
                                     "\
 name: ac-208112.ru
 records: ac-208112.ru 3600 IN SOA ns.majordomo.ru. support.majordomo.ru. 2004032900 3600 900 3600000 3600
@@ -437,15 +437,15 @@ records: ac-208112.ru 3600 IN SOA ns.majordomo.ru. support.majordomo.ru. 2004032
 
 "))))))
 
-(test-assert "gms-account"
-  (mock ((gms scripts account) fetch-account
+(test-assert "ihs-web"
+  (mock ((ihs scripts web) fetch-account
          (lambda (account)
            (match (serialize-account account)
              ("208112" test-account-json)
              (_ (error "Nonexistent account: " account)))))
         (and (string=? (with-output-to-string
                          (lambda ()
-                           (gms-account "show" "ac_208112")))
+                           (ihs-web "show" "ac_208112")))
                        "\
 name: AC_208112
 active: false
@@ -456,7 +456,7 @@ credit: false
 ")
              (string=? (with-output-to-string
                          (lambda ()
-                           (gms-account "service" "ac_208112")))
+                           (ihs-web "service" "ac_208112")))
                        "\
 name: Безлимитный
 cost: 245 rub

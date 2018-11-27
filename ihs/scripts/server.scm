@@ -1,28 +1,28 @@
-;;; Guile GMS --- GMS command-line interface.
+;;; Guile IHS --- IHS command-line interface.
 ;;; Copyright © 2018 Oleg Pykhalov <go.wigust@gmail.com>
 ;;;
-;;; This file is part of Guile GMS.
+;;; This file is part of Guile IHS.
 ;;;
-;;; Guile GMS is free software; you can redistribute it and/or modify
+;;; Guile IHS is free software; you can redistribute it and/or modify
 ;;; it under the terms of the GNU General Public License as published
 ;;; by the Free Software Foundation; either version 3 of the License,
 ;;; or (at your option) any later version.
 ;;;
-;;; Guile GMS is distributed in the hope that it will be useful, but
+;;; Guile IHS is distributed in the hope that it will be useful, but
 ;;; WITHOUT ANY WARRANTY; without even the implied warranty of
 ;;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 ;;; General Public License for more details.
 ;;;
 ;;; You should have received a copy of the GNU General Public License
-;;; along with Guile GMS.  If not, see <http://www.gnu.org/licenses/>.
+;;; along with Guile IHS.  If not, see <http://www.gnu.org/licenses/>.
 
-(define-module (gms scripts server)
+(define-module (ihs scripts server)
   #:use-module ((guix build utils) #:select (mkdir-p))
   #:use-module ((guix scripts) #:select (parse-command-line))
   #:use-module ((guix ui)  #:select (leave G_))
-  #:use-module (gms scripts)
-  #:use-module (gms ui)
-  #:use-module (gms utils)
+  #:use-module (ihs scripts)
+  #:use-module (ihs ui)
+  #:use-module (ihs utils)
   #:use-module (guix import utils)
   #:use-module (ice-9 pretty-print)
   #:use-module (json)
@@ -32,7 +32,7 @@
   #:use-module (srfi srfi-26)
   #:use-module (srfi srfi-37)
   #:use-module (web client)
-  #:export (gms-server
+  #:export (ihs-server
             update-cache
             serialize-server-args))
 
@@ -45,7 +45,7 @@
 ;;;
 
 (define (show-help)
-  (display (G_ "Usage: gms server [OPTION ...] ACTION [ARG ...] [FILE]
+  (display (G_ "Usage: ihs server [OPTION ...] ACTION [ARG ...] [FILE]
 Fetch data about server.\n"))
   (newline)
   (display (G_ "The valid values for ACTION are:\n"))
@@ -119,7 +119,7 @@ Fetch data about server.\n"))
             args))
 
 (define (process-command command args opts)
-  "Process COMMAND, one of the 'gms server' sub-commands.  ARGS is its
+  "Process COMMAND, one of the 'ihs server' sub-commands.  ARGS is its
 argument list and OPTS is the option alist."
   (case command
     ((service)
@@ -194,14 +194,14 @@ argument list and OPTS is the option alist."
 
     (unless action
       (format (current-error-port)
-              (G_ "gms server: missing command name~%"))
+              (G_ "ihs server: missing command name~%"))
       (format (current-error-port)
-              (G_ "Try 'gms server --help' for more information.~%"))
+              (G_ "Try 'ihs server --help' for more information.~%"))
       (exit 1))
 
     args))
 
-(define (gms-server . args)
+(define (ihs-server . args)
   ;; TODO: with-error-handling
   (let* ((opts (parse-command-line args %options
                                    (list %default-options)

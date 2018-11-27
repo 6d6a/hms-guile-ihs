@@ -1,25 +1,25 @@
-;;; Guile GMS --- GMS command-line interface.
+;;; Guile IHS --- IHS command-line interface.
 ;;; Copyright © 2018 Oleg Pykhalov <go.wigust@gmail.com>
 ;;;
-;;; This file is part of Guile GMS.
+;;; This file is part of Guile IHS.
 ;;;
-;;; Guile GMS is free software; you can redistribute it and/or modify
+;;; Guile IHS is free software; you can redistribute it and/or modify
 ;;; it under the terms of the GNU General Public License as published
 ;;; by the Free Software Foundation; either version 3 of the License,
 ;;; or (at your option) any later version.
 ;;;
-;;; Guile GMS is distributed in the hope that it will be useful, but
+;;; Guile IHS is distributed in the hope that it will be useful, but
 ;;; WITHOUT ANY WARRANTY; without even the implied warranty of
 ;;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 ;;; General Public License for more details.
 ;;;
 ;;; You should have received a copy of the GNU General Public License
-;;; along with Guile GMS.  If not, see <http://www.gnu.org/licenses/>.
+;;; along with Guile IHS.  If not, see <http://www.gnu.org/licenses/>.
 
-(define-module (gms ui)
+(define-module (ihs ui)
   #:autoload   (ice-9 ftw)  (scandir)
   #:use-module ((guix ui)  #:select (G_))
-  #:use-module (gms config)
+  #:use-module (ihs config)
   #:use-module (guix import utils)
   #:use-module (ice-9 format)
   #:use-module (ice-9 match)
@@ -33,15 +33,15 @@
   #:use-module (web response)
   #:export (show-bug-report-information
             auth
-            gms-main))
+            ihs-main))
 
-(define gms-user
-  (getenv "GMS_USER"))
+(define ihs-user
+  (getenv "IHS_USER"))
 
-(define gms-password
-  (getenv "GMS_PASS"))
+(define ihs-password
+  (getenv "IHS_PASS"))
 
-(define* (auth #:key (user gms-user) (pass gms-password))
+(define* (auth #:key (user ihs-user) (pass ihs-password))
   (letrec-syntax ((option (syntax-rules ()
                             ((_ key value)
                              (if value
@@ -69,30 +69,26 @@
 
 
 ;;;
-;;; ui
+;;; UI
 ;;;
 
 (define (show-bug-report-information)
-  ;; TRANSLATORS: The placeholder indicates the bug-reporting address for this
-  ;; package.  Please add another line saying "Report translation bugs to
-  ;; ...\n" with the address for translation bugs (typically your translation
-  ;; team's web or email address).
   (format #t (G_ "
-Report bugs to: ~a.") %gms-bug-report-address)
+Report bugs to: ~a.") %ihs-bug-report-address)
   (format #t (G_ "
-~a home page: <~a>") %gms-package-name %gms-home-page-url)
+~a home page: <~a>") %ihs-package-name %ihs-home-page-url)
   (newline))
 
-(define (show-gms-usage)
+(define (show-ihs-usage)
   (format (current-error-port)
-          "Try `gms --help' for more information.~%")
+          "Try `ihs --help' for more information.~%")
   (exit 1))
 
 (define (command-files)
-  "Return the list of source files that define GMS sub-commands."
+  "Return the list of source files that define ihs sub-commands."
   (define directory
-    (and=> (search-path %load-path "gms.scm")
-           (compose (cut string-append <> "/gms/scripts")
+    (and=> (search-path %load-path "ihs.scm")
+           (compose (cut string-append <> "/ihs/scripts")
                     dirname)))
 
   (define dot-scm?
@@ -103,15 +99,15 @@ Report bugs to: ~a.") %gms-bug-report-address)
       '()))
 
 (define (commands)
-  "Return the list of GMS command names."
+  "Return the list of ihs command names."
   (map (compose (cut string-drop-right <> 4)
                 basename)
        (command-files)))
 
-(define (show-gms-help)
+(define (show-ihs-help)
   (format
     #t
-    "Usage: gms COMMAND ARGS...\nRun COMMAND with ARGS.\n")
+    "Usage: ihs COMMAND ARGS...\nRun COMMAND with ARGS.\n")
   (newline)
   (format
     #t
@@ -127,20 +123,20 @@ Report bugs to: ~a.") %gms-bug-report-address)
   ;; Name of the command-line program currently executing, or #f.
   (make-parameter #f))
 
-(define (run-gms-command command . args)
+(define (run-ihs-command command . args)
   "Run COMMAND with the given ARGS.  Report an error when COMMAND is not
 found."
   (define module
     (catch 'misc-error
       (lambda ()
-        (resolve-interface `(gms scripts ,command)))
+        (resolve-interface `(ihs scripts ,command)))
       (lambda -
         (format (current-error-port)
-                "gms: ~a: command not found~%" command)
-        (show-gms-usage))))
+                "ihs: ~a: command not found~%" command)
+        (show-ihs-usage))))
 
   (let ((command-main (module-ref module
-                                  (symbol-append 'gms- command))))
+                                  (symbol-append 'ihs- command))))
     (parameterize ((program-name command))
       ;; Disable canonicalization so we don't don't stat unreasonably.
       (with-fluids ((%file-port-name-canonicalization #f))
@@ -153,28 +149,28 @@ found."
             ;; REPL) to run things like profiling hooks upon completion.
             (run-hook exit-hook)))))))
 
-(define (run-gms . args)
-  "Run the 'gms' command defined by command line ARGS."
+(define (run-ihs . args)
+  "Run the 'ihs' command defined by command line ARGS."
   ;; The default %LOAD-EXTENSIONS includes the empty string, which doubles the
   ;; number of 'stat' calls per entry in %LOAD-PATH.  Shamelessly remove it.
   (set! %load-extensions '(".scm"))
 
   (match args
     (()
-     (format (current-error-port) "gms: missing command name~%")
-     (show-gms-usage))
+     (format (current-error-port) "ihs: missing command name~%")
+     (show-ihs-usage))
     ((or ("-h") ("--help"))
-     (show-gms-help))
+     (show-ihs-help))
     ((command args ...)
-     (apply run-gms-command (string->symbol command) args))))
+     (apply run-ihs-command (string->symbol command) args))))
 
-(define (gms-main arg0 . args)
-  (apply run-gms args))
+(define (ihs-main arg0 . args)
+  (apply run-ihs args))
 
 
 ;;;
-;;; main
+;;; Main
 ;;;
 
 (define* (main #:optional (args (command-line)))
-  (exit (apply gms-main args)))
+  (exit (apply ihs-main args)))
