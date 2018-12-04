@@ -24,6 +24,8 @@
   #:use-module (guix records)
   #:use-module (ihs scripts)
   #:use-module (ihs ui)
+  #:use-module (ihs utils)
+  #:use-module (ice-9 pretty-print)
   #:use-module (json)
   #:use-module (rnrs bytevectors)
   #:use-module (ice-9 match)
@@ -34,13 +36,15 @@
   #:use-module (srfi srfi-26)
   #:use-module (srfi srfi-37)
   #:use-module (web client)
-  #:use-module (ihs scripts server)
   #:export (account->scm
             ihs-web
             serialize-account
 
             account-websites
-            account-websites->scm))
+            account-websites->scm
+
+            update-cache
+            fetch-server))
 
 (define ihs-user
   (getenv "IHS_USER"))
@@ -224,7 +228,8 @@ numbers, etc.) to names.") #f #f
       (let ((action (string->symbol arg)))
         (case action
           ((database database-user domain dump ftp history mailbox search
-                     service show open unix website block unblock)
+                     service show open pull unix website block unblock
+                     server-show server-socket server-storage server-service)
            (alist-cons 'action action result))
           (else (leave (G_ "~a: unknown action~%") action))))))
 
@@ -342,6 +347,37 @@ numbers, etc.) to names.") #f #f
                  `(ihs scripts web ,(string->symbol name))))
         (proc (string->symbol (string-append "ihs-account-" name))))
     (module-ref module proc)))
+
+(define %cache-file
+  (string-append (cache-directory) "/servers.scm"))
+
+(define (fetch-server)
+  (let-values (((response body)
+                (http-get (string-append "https://api.majordomo.ru/rc-staff\
+/server")
+                          #:headers `((content-type . (application/json))
+                                      (Authorization . ,(format #f "Bearer ~a"
+                                                                (auth))))
+                          #:keep-alive? #t)))
+    (utf8->string body)))
+
+(define (server->scm)
+  (map hash-table->alist (json-string->scm (fetch-server))))
+
+(define (update-cache)
+  (with-output-to-file %cache-file
+    (lambda ()
+      (pretty-print (server->scm)))))
+
+(define (serialize-server-args procedure args)
+  (for-each (lambda (arg)
+              (for-each (lambda (server)
+                          (if (or (string=? (assoc-ref server "name") arg)
+                                  (string=? (assoc-ref server "id") arg))
+                              (procedure server)
+                              '()))
+                        (with-input-from-file %cache-file read)))
+            args))
 
 (define (process-command command args opts)
   "Process COMMAND, one of the 'ihs server' sub-commands.  ARGS is its
@@ -698,7 +734,70 @@ argument list and OPTS is the option alist."
       ((domain)
        (serialize-websites-args
         (lambda (user)
-          (for-each format-domain (assoc-ref user "domains"))))))))
+          (for-each format-domain (assoc-ref user "domains")))))
+
+      ((pull)
+       (update-cache))
+
+      ((server-service)
+       (serialize-server-args
+        (lambda (server)
+          (for-each (lambda (service)
+                      (format #t "id: ~a~%"
+                              (assoc-ref service "id"))
+                      (format #t "name: ~a~%"
+                              (assoc-ref service "name"))
+                      (newline))
+                    (assoc-ref server "services")))
+        args))
+      ((server-storage)
+       (serialize-server-args
+        (lambda (server)
+          (for-each (lambda (storage)
+                      (format #t "id: ~a~%"
+                              (assoc-ref storage "id"))
+                      (format #t "name: ~a~%"
+                              (assoc-ref storage "name"))
+                      (format #t "online: ~a~%"
+                              (serialize-boolean (assoc-ref storage "switchedOn")))
+                      ;; TODO: Check capacity size.
+                      (format #t "capacity: ~a/~a GB~%"
+                              (serialize-quota (assoc-ref storage "capacityUsed"))
+                              (serialize-quota (assoc-ref storage "capacity")))
+                      (newline))
+                    (assoc-ref server "storages")))
+        args))
+      ((server-socket)
+       (serialize-server-args
+        (lambda (server)
+          (for-each (lambda (service)
+                      (for-each (lambda (socket)
+                                  (format #t "id: ~a~%"
+                                          (assoc-ref socket "id"))
+                                  (format #t "name: ~a~%"
+                                          (assoc-ref socket "name"))
+                                  (format #t "address: ~a~%"
+                                          (assoc-ref socket "address"))
+                                  (format #t "port: ~a~%"
+                                          (assoc-ref socket "port"))
+                                  (format #t "online: ~a~%"
+                                          (serialize-boolean
+                                           (assoc-ref socket "switchedOn")))
+                                  (newline))
+                                (assoc-ref service "serviceSockets")))
+                    (assoc-ref server "services")))
+        args))
+      ((server-show)
+       (serialize-server-args
+        (lambda (server)
+          (format #t "id: ~a~%"
+                  (assoc-ref server "id"))
+          (format #t "name: ~a~%"
+                  (assoc-ref server "name"))
+          (format #t "online: ~a~%"
+                  (serialize-boolean (assoc-ref server "switchedOn")))
+          (newline))
+        args)))))
 
 (define (option-arguments opts)
   ;; Extract the plain arguments from OPTS.

@@ -19,7 +19,7 @@
 (define-module (test-server)
   #:use-module (guix tests)
   #:use-module (ihs scripts)
-  #:use-module (ihs scripts server)
+  #:use-module (ihs scripts web)
   #:use-module (ice-9 match)
   #:use-module (srfi srfi-64))
 
@@ -4395,14 +4395,14 @@
 
 (test-begin "server")
 
-(test-assert "ihs-server"
-  (mock ((ihs scripts server) fetch-server
+(test-assert "ihs-web"
+  (mock ((ihs scripts web) fetch-server
          (lambda ()
            test-server-json))
         (begin (update-cache)
                (and (string=? (with-output-to-string
                                 (lambda ()
-                                  (ihs-server "show" "web33")))
+                                  (ihs-web "server-show" "web33")))
 "\
 id: web_server_134
 name: web33
@@ -4411,7 +4411,7 @@ online: true
 ")
                     (string=? (with-output-to-string
                                 (lambda ()
-                                  (ihs-server "service" "web33")))
+                                  (ihs-web "server-service" "web33")))
                               "\
 id: 134_mysql_service
 name: mysql@web33
@@ -4521,7 +4521,7 @@ name: apache2-php72-hardened_nochmod@web33
 ")
                     (string=? (with-output-to-string
                                 (lambda ()
-                                  (ihs-server "storage" "web33")))
+                                  (ihs-web "server-storage" "web33")))
                               "\
 id: 59086e28719fca5b2880566b
 name: web33
@@ -4536,7 +4536,7 @@ capacity: 1.22/8000.0 GB
 ")
                     (string=? (with-output-to-string
                                 (lambda ()
-                                  (ihs-server "socket" "web33")))
+                                  (ihs-web "server-socket" "web33")))
                     "\
 id: 134_mysql_socket
 name: mysql-mysql@web33

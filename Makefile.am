@@ -40,8 +40,6 @@ MODULES =					\
   ihs/scripts/web/panel.scm			\
   ihs/scripts/web/search.scm			\
   ihs/scripts/cerb.scm				\
-  ihs/scripts/pull.scm				\
-  ihs/scripts/server.scm			\
   ihs/scripts/vm.scm				\
   ihs/utils.scm					\
   ihs.scm

@@ -20,7 +20,6 @@
   #:use-module (guix tests)
   #:use-module (ihs scripts)
   #:use-module (ihs scripts web)
-  #:use-module ((ihs scripts server) #:select (update-cache))
   #:use-module (ice-9 match)
   #:use-module (srfi srfi-64))
 
@@ -387,7 +386,7 @@
            (match (serialize-account account)
              ("208112" test-website-json)
              (_ (error "Nonexistent account: " account)))))
-        (mock ((ihs scripts server) fetch-server
+        (mock ((ihs scripts web) fetch-server
                (lambda ()
                  test-server-json))
               (begin (update-cache)
