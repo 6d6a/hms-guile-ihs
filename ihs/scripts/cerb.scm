@@ -1,10 +1,13 @@
 (define-module (ihs scripts cerb)
   #:use-module ((guix ui) #:select (G_ leave))
+  #:use-module (ice-9 match)
   #:use-module (ice-9 popen)
   #:use-module (ice-9 rdelim)
-  #:use-module (ice-9 match)
   #:use-module (srfi srfi-1)
+  #:use-module (srfi srfi-11)
   #:use-module (srfi srfi-37)
+  #:use-module (web client)
+  #:use-module (web response)
   #:export (ihs-cerb))
 
 (define info-source
@@ -48,17 +51,92 @@ Fetch data about user.\n"))
   (map-n n list l))
 
 (define (fetch-info)
-  (let* ((port (open-pipe* OPEN_READ "ssh"
-                           info-source "--"
-                           (string-append (string-join (list "cd" "src/hello-nightmarejs"))
-                                          ";"
-                                          (string-join (list (string-append "CERB_DELAY=" delay)
-                                                             (string-append "CERB_DEVBLOCKS=" cookie)
-                                                             (string-append "DISPLAY=" display)
-                                                             "node" "./cerb.js")))))
+  (let* ((port (open-pipe (string-append (getenv "HOME")
+                                         "/bin/cerb")
+                          OPEN_READ))
          (output (read-string port)))
     (close-port port)
     output))
+
+
+
+(define %cerb-uri "http://cerberus.intr")
+
+(define %mail (getenv "CERB_MAIL"))
+
+(define %password (getenv "CERB_PASS"))
+
+(define (post uri devblocks)
+  (http-post (string-append %cerb-uri uri)
+             #:headers `((Cookie . ,(string-append "Devblocks=" devblocks))
+                         (content-type . (application/x-www-form-urlencoded)))
+             #:body (string-append "ext=password&email=" %mail
+                                   "&password=" %password)
+             #:keep-alive? #t))
+
+
+;;;
+;;; Authentication
+;;;
+
+(define (get-cookie)
+  (let-values (((response body)
+                (http-get (string-append %cerb-uri "/index.php/login")
+                          #:keep-alive? #t
+                          #:headers `((Connection . "keep-alive")))))
+    (match (assq 'set-cookie (response-headers response))
+      ((key . value)
+       (match (string-split value #\;)
+         ((devblocks _ ...)
+          (match (string-split devblocks #\=)
+            ((key value)
+             value))))))))
+
+(define (auth devblocks)
+  (for-each (lambda (uri)
+              (post uri devblocks))
+            '("/index.php/login/authenticate"
+              "/index.php/login/authenticated"))
+  (let-values (((response body)
+                (post "/index.php/profiles/worker/me" devblocks)))
+    (let* ((head "_csrf_token\" content=\"")
+           (tail "\">")
+           (head-str (string-drop body (string-contains body head))))
+      (string-drop (string-take head-str
+                                (string-contains head-str tail))
+                   (string-length head)))))
+
+
+;;;
+;;; Tickes
+;;;
+
+#;(define (ticket-id devblocks mask)
+  "(ticket-id \"BY-25659-491\")"
+  (let-values (((response body)
+                (http-post (string-append %cerb-uri "/index.php/profiles/ticket/" mask)
+                           #:headers `((Cookie . ,(string-append "Devblocks=" devblocks))))))
+    (let ((head (string-drop body (string-contains body "ticket_id"))))
+      (match (string-split (string-take head (string-contains head "'"))
+                           #\=)
+        ((_ id) id)))))
+
+#;(define (get-ticket mask)
+  (let-values (((response body)
+                (http-post (string-append %cerb-uri
+                                          "/ajax.php\
+?c=display\
+&a=showConversation\
+&point=cerberusweb.profiles.ticket\
+&ticket_id=" (ticket-id mask)
+"&expand_all=1&_csrf_token=" auth)
+                           #:headers `((Cookie . ,(string-append "Devblocks=" devblocks))))))))
+
+(define (cookie-display args)
+  (let ((c (cookie)))
+    (auth c)
+    (display c)))
+
 
 
 ;;;
