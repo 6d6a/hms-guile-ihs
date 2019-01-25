@@ -18,7 +18,7 @@
 
 (define-module (ihs scripts web)
   #:use-module ((guix scripts) #:select (parse-command-line))
-  #:use-module ((guix ui) #:select (G_ leave))
+  #:use-module ((guix ui) #:select (colorize-string G_ leave))
   #:use-module (guix build utils)
   #:use-module (guix import utils)
   #:use-module (guix records)
@@ -153,6 +153,14 @@ numbers, etc.) to names.") #f #f
 
 (define %default-options '())
 
+(define colorize? #t)
+
+(define* (colorize value #:key (good? #t))
+  (define good (if colorize? (cut colorize-string <> 'GREEN 'BOLD) identity))
+  (define failure (if colorize? (cut colorize-string <> 'RED 'BOLD) identity))
+  (if good? (good value) (failure value)))
+
+
 
 ;;;
 ;;; Entry point.
@@ -284,9 +292,11 @@ numbers, etc.) to names.") #f #f
        (format #t "operation_id: ~a~%" operation-id)
        (match parameters
          (($ <account-action-parameter> ddos-protection resource-id success)
-          (format #t "ddos_protection: ~a~%" (serialize-boolean ddos-protection))
+          (format #t "ddos_protection: ~a~%" (colorize
+                                              (serialize-boolean ddos-protection)
+                                              #:good? #f))
           (format #t "resource_id: ~a~%" resource-id)
-          (format #t "success: ~a~%" (serialize-boolean success))))
+          (format #t "success: ~a~%" (colorize (serialize-boolean success)))))
        (newline)))))
 
 (define (account->scm account)
@@ -398,13 +408,13 @@ argument list and OPTS is the option alist."
       (format #t "name: ~a~%"
               (assoc-ref user "name"))
       (format #t "active: ~a~%"
-              (serialize-boolean (assoc-ref user "active")))
+              (colorize (serialize-boolean (assoc-ref user "active"))))
       (format #t "automatic_billing_sending: ~a~%"
-              (serialize-boolean (assoc-ref user "autoBillSending")))
+              (colorize (serialize-boolean (assoc-ref user "autoBillSending"))))
       (format #t "notify_days: ~a~%"
-              (serialize-boolean (assoc-ref user "notifyDays")))
+              (colorize (serialize-boolean (assoc-ref user "notifyDays"))))
       (format #t "credit: ~a~%"
-              (serialize-boolean (assoc-ref user "credit")))
+              (colorize (serialize-boolean (assoc-ref user "credit"))))
       (newline))
 
     (define (format-service service)
@@ -413,7 +423,7 @@ argument list and OPTS is the option alist."
       (format #t "cost: ~a rub~%"
               (assoc-ref service "cost"))
       (format #t "enabled: ~a~%"
-              (serialize-boolean (assoc-ref service "enabled")))
+              (colorize (serialize-boolean (assoc-ref service "enabled"))))
       (format #t "last_billed: ~a~%"
               (assoc-ref service "lastBilled"))
       (newline))
@@ -424,7 +434,7 @@ argument list and OPTS is the option alist."
       (format #t "document_root: ~a~%"
               (assoc-ref website "documentRoot"))
       (format #t "auto_sub_domain: ~a~%"
-              (serialize-boolean (assoc-ref website "autoSubDomain")))
+              (colorize (serialize-boolean (assoc-ref website "autoSubDomain"))))
       (format #t "index_file_list: ~a~%"
               (string-join (sort (assoc-ref website "indexFileList")
                                  string<)))
@@ -432,13 +442,14 @@ argument list and OPTS is the option alist."
               (string-join (sort (assoc-ref website "staticFileExtensions")
                                  string<)))
       (format #t "cgi_enabled: ~a~%"
-              (serialize-boolean (assoc-ref website "cgiEnabled")))
+              (colorize (serialize-boolean (assoc-ref website "cgiEnabled"))
+                        #:good? #f))
       (format #t "cgi_file_extensions: ~a~%"
               (string-join (assoc-ref website "cgiFileExtensions")))
       (format #t "infected: ~a~%"
-              (serialize-boolean (assoc-ref website "infected")))
+              (colorize (serialize-boolean (assoc-ref website "infected"))))
       (format #t "ddos_protection: ~a~%"
-              (serialize-boolean (assoc-ref website "ddosProtection")))
+              (colorize (serialize-boolean (assoc-ref website "ddosProtection"))))
       (newline))
 
     (define (format-unix account)
@@ -495,8 +506,9 @@ argument list and OPTS is the option alist."
                                (format #t "quota_used: ~a~%"
                                        (assoc-ref database "quotaUsed"))
                                (format #t "will_be_deleted: ~a~%"
-                                       (serialize-boolean
-                                        (assoc-ref database "willBeDeleted")))
+                                       (colorize
+                                        (serialize-boolean
+                                         (assoc-ref database "willBeDeleted"))))
                                (format #t "id: ~a~%"
                                        (assoc-ref database "id"))
                                (format #t "quota: ~a~%"
@@ -506,8 +518,9 @@ argument list and OPTS is the option alist."
                                (format #t "account_id: ~a~%"
                                        (assoc-ref database "accountId"))
                                (format #t "switched_on: ~a~%"
-                                       (serialize-boolean
-                                        (assoc-ref database "switchedOn")))
+                                       (colorize
+                                        (serialize-boolean
+                                         (assoc-ref database "switchedOn"))))
                                (format #t "type: ~a~%"
                                        (assoc-ref database "type"))
                                (format #t "type: ~a~%"
@@ -515,11 +528,13 @@ argument list and OPTS is the option alist."
                                (format #t "service_id: ~a~%"
                                        (assoc-ref database "serviceId"))
                                (format #t "writable: ~a~%"
-                                       (serialize-boolean
-                                        (assoc-ref database "writable")))
+                                       (colorize
+                                        (serialize-boolean
+                                         (assoc-ref database "writable"))))
                                (format #t "locked: ~a~%"
-                                       (serialize-boolean
-                                        (assoc-ref database "locked")))
+                                       (colorize
+                                        (serialize-boolean
+                                         (assoc-ref database "locked"))))
                                (newline))
                              (account-database->scm account)))
                  args))
@@ -529,8 +544,9 @@ argument list and OPTS is the option alist."
                    (for-each (lambda (database)
                                (for-each (lambda (user)
                                            (format #t "will_be_deleted: ~a~%"
-                                                   (serialize-boolean
-                                                    (assoc-ref user "willBeDeleted")))
+                                                   (colorize
+                                                    (serialize-boolean
+                                                     (assoc-ref user "willBeDeleted"))))
                                            (format #t "id: ~a~%"
                                                    (assoc-ref user "id"))
                                            (format #t "max_cpu_time_per_second: ~a~%"
@@ -540,8 +556,9 @@ argument list and OPTS is the option alist."
                                            (format #t "account_id: ~a~%"
                                                    (assoc-ref user "accountId"))
                                            (format #t "switched_on: ~a~%"
-                                                   (serialize-boolean
-                                                    (assoc-ref user "switchedOn")))
+                                                   (colorize
+                                                    (serialize-boolean
+                                                     (assoc-ref user "switchedOn"))))
                                            (format #t "type: ~a~%"
                                                    (assoc-ref user "type"))
                                            (format #t "type: ~a~%"
@@ -553,8 +570,9 @@ argument list and OPTS is the option alist."
                                            (format #t "password_hash: ~a~%"
                                                    (assoc-ref user "passwordHash"))
                                            (format #t "locked: ~a~%"
-                                                   (serialize-boolean
-                                                    (assoc-ref user "locked")))
+                                                   (colorize
+                                                    (serialize-boolean
+                                                     (assoc-ref user "locked"))))
                                            (newline))
                                          (assoc-ref database "databaseUsers")))
                              (account-database->scm account)))
@@ -575,8 +593,9 @@ argument list and OPTS is the option alist."
        (for-each (lambda (account)
                    (for-each (lambda (user)
                                (format #t "will_be_deleted: ~a~%"
-                                       (serialize-boolean
-                                        (assoc-ref user "willBeDeleted")))
+                                       (colorize
+                                        (serialize-boolean
+                                         (assoc-ref user "willBeDeleted"))))
                                (format #t "id: ~a~%"
                                        (assoc-ref user "id"))
                                (format #t "name: ~a~%"
@@ -584,23 +603,26 @@ argument list and OPTS is the option alist."
                                (format #t "account_id: ~a~%"
                                        (assoc-ref user "accountId"))
                                (format #t "switched_on: ~a~%"
-                                       (serialize-boolean
-                                        (assoc-ref user "switchedOn")))
+                                       (colorize
+                                        (serialize-boolean
+                                         (assoc-ref user "switchedOn"))))
                                (format #t "home_dir: ~a~%"
                                        (assoc-ref user "homeDir"))
                                (format #t "type: ~a~%"
                                        (serialize-boolean
                                         (assoc-ref user "type")))
                                (format #t "allow_web_ftp: ~a~%"
-                                       (serialize-boolean
-                                        (assoc-ref user "allowWebFtp")))
+                                       (colorize
+                                        (serialize-boolean
+                                         (assoc-ref user "allowWebFtp"))))
                                (format #t "allowed_ip_addresses: ~a~%"
                                        (assoc-ref user "allowedIPAddresses"))
                                (format #t "password_hash: ~a~%"
                                        (assoc-ref user "passwordHash"))
                                (format #t "locked: ~a~%"
-                                       (serialize-boolean
-                                        (assoc-ref user "locked")))
+                                       (colorize
+                                        (serialize-boolean
+                                         (assoc-ref user "locked"))))
                                (newline))
                              (account-ftp->scm account)))
                  args))
@@ -621,26 +643,31 @@ argument list and OPTS is the option alist."
                                (format #t "mail_spool: ~a~%"
                                        (assoc-ref mailbox "mailSpool"))
                                (format #t "switched_on: ~a~%"
-                                       (serialize-boolean
-                                        (assoc-ref mailbox "switchedOn")))
+                                       (colorize
+                                        (serialize-boolean
+                                         (assoc-ref mailbox "switchedOn"))))
                                (format #t "writable: ~a~%"
-                                       (serialize-boolean
-                                        (assoc-ref mailbox "writable")))
+                                       (colorize
+                                        (serialize-boolean
+                                         (assoc-ref mailbox "writable"))))
                                (format #t "locked: ~a~%"
-                                       (serialize-boolean
-                                        (assoc-ref mailbox "locked")))
+                                       (colorize
+                                        (serialize-boolean
+                                         (assoc-ref mailbox "locked"))))
                                (format #t "quota_used: ~a~%"
                                        (assoc-ref mailbox "quotaUsed"))
                                (format #t "account_id: ~a~%"
                                        (assoc-ref mailbox "accountId"))
                                (format #t "anti_spam_enabled: ~a~%"
-                                       (serialize-boolean
-                                        (assoc-ref mailbox "antiSpamEnabled")))
+                                       (colorize
+                                        (serialize-boolean
+                                         (assoc-ref mailbox "antiSpamEnabled"))))
                                (format #t "spam_filter_mood: ~a~%"
                                        (assoc-ref mailbox "spamFilterMood"))
                                (format #t "will_be_deleted: ~a~%"
-                                       (serialize-boolean
-                                        (assoc-ref mailbox "willBeDeleted")))
+                                       (colorize
+                                        (serialize-boolean
+                                         (assoc-ref mailbox "willBeDeleted"))))
                                (format #t "white_list: ~a~%"
                                        (assoc-ref mailbox "whiteList"))
                                (format #t "quota: ~a~%"
@@ -656,8 +683,9 @@ argument list and OPTS is the option alist."
                                (format #t "comment: ~a~%"
                                        (assoc-ref mailbox "comment"))
                                (format #t "mail_from_allowed: ~a~%"
-                                       (serialize-boolean
-                                        (assoc-ref mailbox "mailFromAllowed")))
+                                       (colorize
+                                        (serialize-boolean
+                                         (assoc-ref mailbox "mailFromAllowed"))))
                                (format #t "redirect_addresses: ~a~%"
                                        (string-join
                                         (assoc-ref mailbox "redirectAddresses")))
@@ -767,7 +795,7 @@ argument list and OPTS is the option alist."
                                     (format #t "name: ~a~%"
                                             (assoc-ref storage "name"))
                                     (format #t "online: ~a~%"
-                                            (serialize-boolean (assoc-ref storage "switchedOn")))
+                                            (colorize (serialize-boolean (assoc-ref storage "switchedOn"))))
                                     ;; TODO: Check capacity size.
                                     (format #t "capacity: ~a/~a GB~%"
                                             (serialize-quota (assoc-ref storage "capacityUsed"))
@@ -793,8 +821,9 @@ argument list and OPTS is the option alist."
                                                 (format #t "port: ~a~%"
                                                         (assoc-ref socket "port"))
                                                 (format #t "online: ~a~%"
-                                                        (serialize-boolean
-                                                         (assoc-ref socket "switchedOn")))
+                                                        (colorize
+                                                         (serialize-boolean
+                                                          (assoc-ref socket "switchedOn"))))
                                                 (newline))
                                               (assoc-ref service "serviceSockets")))
                                   services)))))
@@ -805,7 +834,7 @@ argument list and OPTS is the option alist."
                      (format #t "id: ~a~%" (assoc-ref server "id"))
                      (format #t "name: ~a~%" (assoc-ref server "name"))
                      (format #t "online: ~a~%"
-                             (serialize-boolean (assoc-ref server "switchedOn")))
+                             (colorize (serialize-boolean (assoc-ref server "switchedOn"))))
                      (newline)))
         args)))))
 
