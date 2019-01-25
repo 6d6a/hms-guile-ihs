@@ -1,5 +1,5 @@
 ;;; Guile IHS --- IHS command-line interface.
-;;; Copyright © 2018 Oleg Pykhalov <go.wigust@gmail.com>
+;;; Copyright © 2018, 2019 Oleg Pykhalov <go.wigust@gmail.com>
 ;;;
 ;;; This file is part of Guile IHS.
 ;;;
@@ -369,15 +369,11 @@ numbers, etc.) to names.") #f #f
     (lambda ()
       (pretty-print (server->scm)))))
 
-(define (serialize-server-args procedure args)
-  (for-each (lambda (arg)
-              (for-each (lambda (server)
-                          (if (or (string=? (assoc-ref server "name") arg)
-                                  (string=? (assoc-ref server "id") arg))
-                              (procedure server)
-                              '()))
-                        (with-input-from-file %cache-file read)))
-            args))
+(define (find-server server)
+  (find (lambda (entry)
+          (or (string=? (assoc-ref entry "name") server)
+              (string=? (assoc-ref entry "id") server)))
+        (with-input-from-file %cache-file read)))
 
 (define (process-command command args opts)
   "Process COMMAND, one of the 'ihs server' sub-commands.  ARGS is its
@@ -485,6 +481,12 @@ argument list and OPTS is the option alist."
         (_ '()))
 
       (newline))
+
+    (define (serialize-server server)
+      (let ((server-id (assoc-ref server "serverId")))
+        (format #t "server_id: ~a~%" server-id)
+        (format #t "server_name: ~a~%"
+                (assoc-ref (find-server server-id) "name"))))
 
     (case command
       ((database)
@@ -609,37 +611,42 @@ argument list and OPTS is the option alist."
       ((mailbox)
        (for-each (lambda (account)
                    (for-each (lambda (mailbox)
+                               (format #t "type: ~a~%"
+                                       (assoc-ref mailbox "@type"))
+                               (format #t "name: ~a~%"
+                                       (assoc-ref mailbox "name"))
+                               (format #t "id: ~a~%"
+                                       (assoc-ref mailbox "id"))
+                               (serialize-server mailbox)
+                               (format #t "mail_spool: ~a~%"
+                                       (assoc-ref mailbox "mailSpool"))
+                               (format #t "switched_on: ~a~%"
+                                       (serialize-boolean
+                                        (assoc-ref mailbox "switchedOn")))
+                               (format #t "writable: ~a~%"
+                                       (serialize-boolean
+                                        (assoc-ref mailbox "writable")))
+                               (format #t "locked: ~a~%"
+                                       (serialize-boolean
+                                        (assoc-ref mailbox "locked")))
                                (format #t "quota_used: ~a~%"
                                        (assoc-ref mailbox "quotaUsed"))
-                               (format #t "server_id: ~a~%"
-                                       (assoc-ref mailbox "serverId"))
+                               (format #t "account_id: ~a~%"
+                                       (assoc-ref mailbox "accountId"))
+                               (format #t "anti_spam_enabled: ~a~%"
+                                       (serialize-boolean
+                                        (assoc-ref mailbox "antiSpamEnabled")))
+                               (format #t "spam_filter_mood: ~a~%"
+                                       (assoc-ref mailbox "spamFilterMood"))
                                (format #t "will_be_deleted: ~a~%"
                                        (serialize-boolean
                                         (assoc-ref mailbox "willBeDeleted")))
-                               (format #t "id: ~a~%"
-                                       (assoc-ref mailbox "id"))
-                               (format #t "mail_spool: ~a~%"
-                                       (assoc-ref mailbox "mailSpool"))
                                (format #t "white_list: ~a~%"
                                        (assoc-ref mailbox "whiteList"))
                                (format #t "quota: ~a~%"
                                        (assoc-ref mailbox "quota"))
-                               (format #t "name: ~a~%"
-                                       (assoc-ref mailbox "name"))
-                               (format #t "account_id: ~a~%"
-                                       (assoc-ref mailbox "accountId"))
-                               (format #t "switched_on: ~a~%"
-                                       (serialize-boolean
-                                        (assoc-ref mailbox "switchedOn")))
                                (format #t "is_aggregator: ~a~%"
                                        (assoc-ref mailbox "isAggregator"))
-                               (format #t "type: ~a~%"
-                                       (assoc-ref mailbox "@type"))
-                               (format #t "spam_filter_mood: ~a~%"
-                                       (assoc-ref mailbox "spamFilterMood"))
-                               (format #t "writable: ~a~%"
-                                       (serialize-boolean
-                                        (assoc-ref mailbox "writable")))
                                (format #t "black_list: ~a~%"
                                        (assoc-ref mailbox "blackList"))
                                (format #t "domain_id: ~a~%"
@@ -652,15 +659,10 @@ argument list and OPTS is the option alist."
                                        (serialize-boolean
                                         (assoc-ref mailbox "mailFromAllowed")))
                                (format #t "redirect_addresses: ~a~%"
-                                       (assoc-ref mailbox "redirectAddresses"))
-                               (format #t "anti_spam_enabled: ~a~%"
-                                       (serialize-boolean
-                                        (assoc-ref mailbox "antiSpamEnabled")))
+                                       (string-join
+                                        (assoc-ref mailbox "redirectAddresses")))
                                (format #t "spam_filter_action: ~a~%"
                                        (assoc-ref mailbox "spamFilterAction"))
-                               (format #t "locked: ~a~%"
-                                       (serialize-boolean
-                                        (assoc-ref mailbox "locked")))
                                (format #t "uid: ~a~%"
                                        (assoc-ref mailbox "uid"))
                                (newline))
@@ -740,63 +742,71 @@ argument list and OPTS is the option alist."
        (update-cache))
 
       ((server-service)
-       (serialize-server-args
-        (lambda (server)
-          (for-each (lambda (service)
-                      (format #t "id: ~a~%"
-                              (assoc-ref service "id"))
-                      (format #t "name: ~a~%"
-                              (assoc-ref service "name"))
-                      (newline))
-                    (assoc-ref server "services")))
-        args))
+       (for-each (lambda (server)
+                   (let ((server (find-server server)))
+                     (match (assoc-ref server "services")
+                       (()
+                        (format #t "No services on ~s server.~%" (assoc-ref server "name")))
+                       (services
+                        (for-each (lambda (service)
+                                    (format #t "id: ~a~%" (assoc-ref service "id"))
+                                    (format #t "name: ~a~%" (assoc-ref service "name"))
+                                    (newline))
+                                  services)))))
+                 args))
       ((server-storage)
-       (serialize-server-args
-        (lambda (server)
-          (for-each (lambda (storage)
-                      (format #t "id: ~a~%"
-                              (assoc-ref storage "id"))
-                      (format #t "name: ~a~%"
-                              (assoc-ref storage "name"))
-                      (format #t "online: ~a~%"
-                              (serialize-boolean (assoc-ref storage "switchedOn")))
-                      ;; TODO: Check capacity size.
-                      (format #t "capacity: ~a/~a GB~%"
-                              (serialize-quota (assoc-ref storage "capacityUsed"))
-                              (serialize-quota (assoc-ref storage "capacity")))
-                      (newline))
-                    (assoc-ref server "storages")))
-        args))
+       (for-each (lambda (server)
+                   (let ((server (find-server server)))
+                     (match (assoc-ref server "storages")
+                       (()
+                        (format #t "No storages on ~s server.~%" (assoc-ref server "name")))
+                       (storages
+                        (for-each (lambda (storage)
+                                    (format #t "id: ~a~%"
+                                            (assoc-ref storage "id"))
+                                    (format #t "name: ~a~%"
+                                            (assoc-ref storage "name"))
+                                    (format #t "online: ~a~%"
+                                            (serialize-boolean (assoc-ref storage "switchedOn")))
+                                    ;; TODO: Check capacity size.
+                                    (format #t "capacity: ~a/~a GB~%"
+                                            (serialize-quota (assoc-ref storage "capacityUsed"))
+                                            (serialize-quota (assoc-ref storage "capacity")))
+                                    (newline))
+                                  storages)))))
+                 args))
       ((server-socket)
-       (serialize-server-args
-        (lambda (server)
-          (for-each (lambda (service)
-                      (for-each (lambda (socket)
-                                  (format #t "id: ~a~%"
-                                          (assoc-ref socket "id"))
-                                  (format #t "name: ~a~%"
-                                          (assoc-ref socket "name"))
-                                  (format #t "address: ~a~%"
-                                          (assoc-ref socket "address"))
-                                  (format #t "port: ~a~%"
-                                          (assoc-ref socket "port"))
-                                  (format #t "online: ~a~%"
-                                          (serialize-boolean
-                                           (assoc-ref socket "switchedOn")))
-                                  (newline))
-                                (assoc-ref service "serviceSockets")))
-                    (assoc-ref server "services")))
-        args))
+       (for-each (lambda (server)
+                   (let ((server (find-server server)))
+                     (match (assoc-ref server "services")
+                       (()
+                        (format #t "No services on ~s server.~%" (assoc-ref server "name")))
+                       (services
+                        (for-each (lambda (service)
+                                    (for-each (lambda (socket)
+                                                (format #t "id: ~a~%"
+                                                        (assoc-ref socket "id"))
+                                                (format #t "name: ~a~%"
+                                                        (assoc-ref socket "name"))
+                                                (format #t "address: ~a~%"
+                                                        (assoc-ref socket "address"))
+                                                (format #t "port: ~a~%"
+                                                        (assoc-ref socket "port"))
+                                                (format #t "online: ~a~%"
+                                                        (serialize-boolean
+                                                         (assoc-ref socket "switchedOn")))
+                                                (newline))
+                                              (assoc-ref service "serviceSockets")))
+                                  services)))))
+                 args))
       ((server-show)
-       (serialize-server-args
-        (lambda (server)
-          (format #t "id: ~a~%"
-                  (assoc-ref server "id"))
-          (format #t "name: ~a~%"
-                  (assoc-ref server "name"))
-          (format #t "online: ~a~%"
-                  (serialize-boolean (assoc-ref server "switchedOn")))
-          (newline))
+       (for-each (lambda (server)
+                   (let ((server (find-server server)))
+                     (format #t "id: ~a~%" (assoc-ref server "id"))
+                     (format #t "name: ~a~%" (assoc-ref server "name"))
+                     (format #t "online: ~a~%"
+                             (serialize-boolean (assoc-ref server "switchedOn")))
+                     (newline)))
         args)))))
 
 (define (option-arguments opts)
@@ -811,9 +821,9 @@ argument list and OPTS is the option alist."
 
     (unless action
       (format (current-error-port)
-              (G_ "ihs account: missing command name~%"))
+              (G_ "ihs web: missing command name~%"))
       (format (current-error-port)
-              (G_ "Try 'ihs account --help' for more information.~%"))
+              (G_ "Try 'ihs web --help' for more information.~%"))
       (exit 1))
 
     args))
