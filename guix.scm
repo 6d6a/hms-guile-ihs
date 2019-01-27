@@ -1,5 +1,5 @@
 ;;; Guile IHS --- IHS command-line interface.
-;;; Copyright © 2018 Oleg Pykhalov <go.wigust@gmail.com>
+;;; Copyright © 2018, 2019 Oleg Pykhalov <go.wigust@gmail.com>
 ;;;
 ;;; This file is part of Guile IHS.
 ;;;
@@ -31,6 +31,7 @@
              (gnu packages guile)
              (gnu packages package-management)
              (gnu packages pkg-config)
+             (majordomo packages majordomo)
              (gnu packages tls)
              (guix build utils)
              (guix build-system gnu)
@@ -64,13 +65,16 @@ newspace."
                           #:recursive? #t
                           #:select? (git-predicate %source-dir)))
       (build-system gnu-build-system)
+      (home-page "https://majordomo.ru/")
       (arguments
-       `(#:modules ((guix build gnu-build-system)
-                    (guix build utils)
-                    (srfi srfi-26)
-                    (ice-9 popen)
-                    (ice-9 rdelim))
-          #:phases
+       `(#:modules
+         ((guix build gnu-build-system)
+          (guix build utils)
+          (srfi srfi-26)
+          (ice-9 popen)
+          (ice-9 rdelim))
+         #:tests? #f
+         #:phases
          (modify-phases %standard-phases
            (add-after 'install 'wrap-program
              (lambda* (#:key inputs outputs #:allow-other-keys)
@@ -105,18 +109,42 @@ newspace."
                    `("GUILE_LOAD_PATH" ":" prefix (,path))
                    `("GUILE_LOAD_COMPILED_PATH" ":" prefix (,gopath)))
 
-                 #t))))))
+                 #t)
+               (let* ((guile  (assoc-ref inputs "guile"))
+                      (effective
+                       (read-line
+                        (open-pipe* OPEN_READ
+                                    (string-append guile "/bin/guile")
+                                    "-c" "(display (effective-version))")))
+                      (path (cut string-append <>
+                                 "/share/guile/site/"
+                                 effective
+                                 "/ihs")))
+                 (with-directory-excursion "ihs"
+                   (copy-file "config.scm.in" "config.scm")
+                   (substitute* "config.scm"
+                     (("@PACKAGE_NAME@") ,name)
+                     (("@PACKAGE_VERSION@") ,version)
+                     (("@PACKAGE_URL@") ,home-page)
+                     (("@CVM@") (string-append (assoc-ref inputs "cvm")
+                                               "/bin/cvm")))
+                   (install-file "config.scm"
+                                 (path (assoc-ref outputs "out"))))
+                 #t)))
+           (add-before 'check 'set-environment
+             (lambda _
+               (setenv "HOME" (getcwd)))))))
       (native-inputs
        `(("autoconf" ,autoconf)
          ("automake" ,automake)
          ("pkg-config" ,pkg-config)))
       (inputs
-       `(("gnutls" ,gnutls)
+       `(("cvm" ,python-cvm)
+         ("gnutls" ,gnutls)
          ("guile" ,guile-2.2)
          ("guile-gcrypt" ,guile-gcrypt)
          ("guile-json" ,guile-json)
          ("guix" ,guix)))
-      (home-page "https://majordomo.ru/")
       (synopsis "Guile interface to Majordomo API")
       (description
        "This package provides a Guile interface to Majordomo API.")
