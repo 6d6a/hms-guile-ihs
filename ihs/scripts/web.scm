@@ -457,12 +457,7 @@ argument list and OPTS is the option alist."
         (format #t "quota: ~a/~a GB~%"
                 (serialize-quota (assoc-ref unix-account "quotaUsed"))
                 (serialize-quota (assoc-ref unix-account "quota")))
-        (let ((server-id (assoc-ref unix-account "serverId")))
-          (format #t "server_id: ~a~%" (assoc-ref unix-account "serverId"))
-          (serialize-server-args
-           (lambda (server)
-             (format #t "server_name: ~a~%" (assoc-ref server "name")))
-           (list server-id)))
+        (serialize-server unix-account)
         (format #t "name: ~a~%" (assoc-ref unix-account "name"))
         (format #t "home_dir: ~a~%" (assoc-ref unix-account "homeDir"))
         (newline)))
