@@ -406,6 +406,7 @@ home_dir: /home/u7590
                                         (ihs-web "website" "ac_208112")))
                                     "\
 name: ac-208112.ru
+id: 5ac4a2f137c47a00072b9350
 document_root: ac-208112.ru/www
 auto_sub_domain: false
 index_file_list: index.html index.php

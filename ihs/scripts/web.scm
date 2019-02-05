@@ -27,6 +27,7 @@
   #:use-module (ihs utils)
   #:use-module (ice-9 pretty-print)
   #:use-module (json)
+  #:use-module (guix memoization)
   #:use-module (rnrs bytevectors)
   #:use-module (ice-9 match)
   #:use-module (ice-9 popen)
@@ -155,12 +156,32 @@ numbers, etc.) to names.") #f #f
 
 (define %default-options '())
 
-(define colorize? #t)
+(define isatty?*
+  (mlambdaq (port)
+    (isatty? port)))
 
-(define* (colorize value #:key (good? #t))
-  (define good (if colorize? (cut colorize-string <> 'GREEN 'BOLD) identity))
-  (define failure (if colorize? (cut colorize-string <> 'RED 'BOLD) identity))
-  (if good? (good value) (failure value)))
+(define (color-output? port)
+  "Return true if we should write colored output to PORT."
+  (and (not (getenv "INSIDE_EMACS"))
+       (not (getenv "NO_COLOR"))
+       (isatty?* port)))
+
+(define* (colorize value
+                   #:optional (port (current-output-port))
+                   #:key (colorize? (color-output? port)) (good? #t))
+  (define good
+    (if colorize?
+        (cut colorize-string <> 'GREEN 'BOLD)
+        identity))
+
+  (define failure
+    (if colorize?
+        (cut colorize-string <> 'RED 'BOLD)
+        identity))
+
+  (if good?
+      (good value)
+      (failure value)))
 
 
 
@@ -438,6 +459,8 @@ argument list and OPTS is the option alist."
     (define (format-website website)
       (format #t "name: ~a~%"
               (assoc-ref website "name"))
+      (format #t "id: ~a~%"
+              (assoc-ref website "id"))
       (format #t "document_root: ~a~%"
               (assoc-ref website "documentRoot"))
       (format #t "auto_sub_domain: ~a~%"
