@@ -73,7 +73,6 @@ newspace."
           (srfi srfi-26)
           (ice-9 popen)
           (ice-9 rdelim))
-         #:tests? #f
          #:phases
          (modify-phases %standard-phases
            (add-after 'install 'wrap-program
