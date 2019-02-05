@@ -148,8 +148,8 @@ Fetch data about user.\n"))
                   (exit 0)))
         (option '(#\n "Don't convert addresses (i.e., host addresses, port
 numbers, etc.) to names.") #f #f
-(lambda (opt name arg result)
-  (alist-cons 'do-not-resolve? #t result)))))
+                (lambda (opt name arg result)
+                  (alist-cons 'do-not-resolve? #t result)))))
 
 (define %default-options '())
 
