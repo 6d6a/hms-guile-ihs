@@ -118,6 +118,10 @@ Fetch data about user.\n"))
    block-ip              block IP-address via NGINX
                          ihs web block-ip web33:95.55.190.61"))
   (display (G_ "\
+   block                 block all websites DDoS protection on ACCOUNTs"))
+  (display (G_ "\
+   unblock               unblock all websites DDoS protection on ACCOUNTs"))
+  (display (G_ "\
    database              show database on account\n"))
   (display (G_ "\
    database-user         show database users on account\n"))
