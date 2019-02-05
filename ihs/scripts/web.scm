@@ -112,6 +112,8 @@ Fetch data about user.\n"))
   (display (G_ "The valid values for ACTION are:\n"))
   (newline)
   (display (G_ "\
+   billing               open web billing to edit account settings\n"))
+  (display (G_ "\
    database              show database on account\n"))
   (display (G_ "\
    database-user         show database users on account\n"))
@@ -240,9 +242,9 @@ numbers, etc.) to names.") #f #f
       (alist-cons 'argument arg result)
       (let ((action (string->symbol arg)))
         (case action
-          ((database database-user domain dump ftp history mailbox search
-                     service show open pull unix website block unblock
-                     server-show server-socket server-storage server-service)
+          ((billing database database-user domain dump ftp history mailbox
+            search service show open pull unix website block unblock server-show
+            server-socket server-storage server-service)
            (alist-cons 'action action result))
           (else (leave (G_ "~a: unknown action~%") action))))))
 
@@ -500,6 +502,16 @@ argument list and OPTS is the option alist."
                 (assoc-ref (find-server server-id) "name"))))
 
     (case command
+      ((billing)
+       (for-each (lambda (account)
+                   (format #t "Open account billing: ~a~%" account)
+                   (system* "firefox"
+                            (string-append "https://hms-billing.majordomo.ru/account/"
+                                           (let ((prefix "AC_"))
+                                             (if (string-prefix? prefix account)
+                                                 (string-drop account (string-length prefix))
+                                                 account)))))
+                 args))
       ((database)
        (for-each (lambda (account)
                    (for-each (lambda (database)
