@@ -115,6 +115,9 @@ Fetch data about user.\n"))
   (display (G_ "\
    billing               open web billing to edit account settings\n"))
   (display (G_ "\
+   block-ip              block IP-address via NGINX
+                         ihs web block-ip web33:95.55.190.61"))
+  (display (G_ "\
    database              show database on account\n"))
   (display (G_ "\
    database-user         show database users on account\n"))
@@ -263,7 +266,7 @@ numbers, etc.) to names.") #f #f
       (alist-cons 'argument arg result)
       (let ((action (string->symbol arg)))
         (case action
-          ((billing database database-user domain dump ftp history mailbox
+          ((billing block-ip database database-user domain dump ftp history mailbox
             search service show open pull unix website block unblock server-show
             server-socket server-storage server-service)
            (alist-cons 'action action result))
@@ -794,6 +797,20 @@ argument list and OPTS is the option alist."
                                  (website-ddos account website-id
                                                #:block? #f)))
                              (account-websites->scm account)))
+                 args))
+
+      ((block-ip)
+       (for-each (lambda (rule)
+                   (match (string-split rule #\:)
+                     ((server ip)
+                      (let ((server (if (string-suffix? "s" server)
+                                        (string-drop-right (string-length "1")
+                                                           server)
+                                        server)))
+                        (format #t "Block ~a on ~a." ip server)
+                        (system* "curl" "-i" "-XPUT"
+                                 (string-append server "/ip-filter/" ip
+                                                "?ttl=7200&action=setCookie"))))))
                  args))
 
       ((domain)
