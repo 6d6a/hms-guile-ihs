@@ -111,11 +111,11 @@ Fetch data about user.\n"))
    billing               open web billing to edit account settings\n"))
   (display (G_ "\
    block-ip              block IP-address via NGINX
-                         ihs web block-ip web33:95.55.190.61"))
+                         ihs web block-ip web33:95.55.190.61\n"))
   (display (G_ "\
-   block                 block all websites DDoS protection on ACCOUNTs"))
+   block                 block all websites DDoS protection on ACCOUNTs\n"))
   (display (G_ "\
-   unblock               unblock all websites DDoS protection on ACCOUNTs"))
+   unblock               unblock all websites DDoS protection on ACCOUNTs\n"))
   (display (G_ "\
    database              show database on account\n"))
   (display (G_ "\
