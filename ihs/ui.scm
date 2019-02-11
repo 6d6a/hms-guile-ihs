@@ -1,5 +1,5 @@
 ;;; Guile IHS --- IHS command-line interface.
-;;; Copyright © 2018 Oleg Pykhalov <go.wigust@gmail.com>
+;;; Copyright © 2018, 2019 Oleg Pykhalov <go.wigust@gmail.com>
 ;;;
 ;;; This file is part of Guile IHS.
 ;;;
@@ -32,7 +32,6 @@
   #:use-module (web client)
   #:use-module (web response)
   #:export (show-bug-report-information
-            auth
             ihs-main))
 
 

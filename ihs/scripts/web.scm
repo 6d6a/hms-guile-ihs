@@ -38,6 +38,7 @@
   #:use-module (srfi srfi-37)
   #:use-module (web client)
   #:export (account->scm
+            auth
             ihs-web
             serialize-account
 
@@ -47,13 +48,7 @@
             update-cache
             fetch-server))
 
-(define ihs-user
-  (getenv "IHS_USER"))
-
-(define ihs-password
-  (getenv "IHS_PASS"))
-
-(define* (auth #:key (user ihs-user) (pass ihs-password))
+(define* (auth #:key (user (getenv "IHS_USER")) (pass (getenv "IHS_PASS")))
   (letrec-syntax ((option (syntax-rules ()
                             ((_ key value)
                              (if value
@@ -390,7 +385,7 @@ numbers, etc.) to names.") #f #f
 (define (resolve-subcommand name)
   (let ((module (resolve-interface
                  `(ihs scripts web ,(string->symbol name))))
-        (proc (string->symbol (string-append "ihs-account-" name))))
+        (proc (string->symbol (string-append "ihs-web-" name))))
     (module-ref module proc)))
 
 (define %cache-file
