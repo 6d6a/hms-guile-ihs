@@ -131,6 +131,8 @@ Fetch data about user.\n"))
   (display (G_ "\
    mailbox               show mailboxes on account\n"))
   (display (G_ "\
+   owner                 show account owner\n"))
+  (display (G_ "\
    service               search for existing service types\n"))
   (display (G_ "\
    open                  open billing\n"))
@@ -267,9 +269,9 @@ numbers, etc.) to names.") #f #f
       (alist-cons 'argument arg result)
       (let ((action (string->symbol arg)))
         (case action
-          ((billing block-ip database database-user domain dump ftp history mailbox
-            search service show open pull unix website block unblock server-show
-            server-socket server-storage server-service)
+          ((billing block-ip database database-user domain dump ftp history
+            mailbox owner search service show open pull unix website block unblock
+            server-show server-socket server-storage server-service)
            (alist-cons 'action action result))
           (else (leave (G_ "~a: unknown action~%") action))))))
 
@@ -383,6 +385,17 @@ numbers, etc.) to names.") #f #f
 
 (define (account-database->scm account)
   (map hash-table->alist (json-string->scm (account-database account))))
+
+(define (account-owner account)
+  (let-values (((response body)
+                (http-get (string-append "https://api.majordomo.ru/" account "/owner")
+                          #:headers `((content-type . (application/json))
+                                      (Authorization . ,(format #f "Bearer ~a" (auth))))
+                          #:keep-alive? #t)))
+    (utf8->string body)))
+
+(define (account-owner->scm account)
+  (hash-table->alist (json-string->scm (account-owner account))))
 
 (define (resolve-subcommand name)
   (let ((module (resolve-interface
@@ -734,6 +747,15 @@ argument list and OPTS is the option alist."
                                        (assoc-ref mailbox "uid"))
                                (newline))
                              (account-mailbox->scm account)))
+                 args))
+
+      ((owner)
+       (for-each (lambda (account)
+                   (let ((owner (account-owner->scm account)))
+                     (format #t "account: ~a~%" (assoc-ref owner "personalAccountId"))
+                     (match (assoc-ref owner "contactInfo")
+                       ((_ _ _ _ _ _ (_ emails ...))
+                        (format #t "emails: ~a~%" (string-join emails ", "))))))
                  args))
 
       ((show)
