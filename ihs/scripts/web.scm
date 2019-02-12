@@ -46,7 +46,9 @@
             account-websites->scm
 
             update-cache
-            fetch-server))
+            fetch-server
+
+            colorize))
 
 (define* (auth #:key (user (getenv "IHS_USER")) (pass (getenv "IHS_PASS")))
   (letrec-syntax ((option (syntax-rules ()
@@ -181,7 +183,7 @@ numbers, etc.) to names.") #f #f
         (cut colorize-string <> 'RED 'BOLD)
         identity))
 
-  (if good?
+  (if (string=? value "true")
       (good value)
       (failure value)))
 

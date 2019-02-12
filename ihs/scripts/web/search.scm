@@ -1,5 +1,5 @@
 ;;; Guile GMS --- GMS command-line interface.
-;;; Copyright © 2018 Oleg Pykhalov <go.wigust@gmail.com>
+;;; Copyright © 2018, 2019 Oleg Pykhalov <go.wigust@gmail.com>
 ;;;
 ;;; This file is part of Guile GMS.
 ;;;
@@ -123,7 +123,8 @@ Fetch data about server.\n"))
 (define (serialize-domain domain)
   (format #t "name: ~a~%" (assoc-ref domain "name"))
   (format #t "id: ~a~%" (assoc-ref domain "id"))
-  (format #t "account: ~a~%" (assoc-ref domain "accountId")))
+  (format #t "account: ~a~%" (assoc-ref domain "accountId"))
+  (format #t "active: ~a~%" (colorize (serialize-boolean (assoc-ref domain "switchedOn")))))
 
 (define (serialize-account-number account)
   (format #t "created: ~a~%" (assoc-ref account "created"))
