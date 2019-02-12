@@ -1,5 +1,5 @@
 ;;; Guile IHS --- IHS command-line interface.
-;;; Copyright © 2018 Oleg Pykhalov <go.wigust@gmail.com>
+;;; Copyright © 2018, 2019 Oleg Pykhalov <go.wigust@gmail.com>
 ;;;
 ;;; This file is part of Guile IHS.
 ;;;
@@ -29,6 +29,7 @@
   #:use-module (srfi srfi-11)
   #:use-module (srfi srfi-37)
   #:use-module (web client)
+  #:use-module (ihs scripts web)
   #:export (ihs-web-history))
 
 (define (show-help)
@@ -79,30 +80,20 @@ Fetch history about a user.\n"))
   ;; TODO: with-error-handling
   (let* ((history (history->scm #:account (car args)))
          (pages (assoc-ref history "totalPages")))
-    (for-each (lambda (record)
-                (let ((operator (assoc-ref record "operator")))
-                  (if (string=? operator "service")
-                      (begin (format #t "id: ~a~%" (assoc-ref record "id"))
-                             (format #t "created: ~a~%" (assoc-ref record "created"))
-                             (format #t "operator: ~a~%" operator)
-                             (format #t "message: ~a~%" (assoc-ref record "message"))
-                             (newline)))))
-              (assoc-ref history "content"))
     (letrec ((fetch-page (lambda (page)
                            (if (> page pages)
                                '()
                                (begin
                                  (for-each (lambda (record)
                                              (let ((operator (assoc-ref record "operator")))
-                                               (if (string=? operator "service")
-                                                   (begin (format #t "id: ~a~%" (assoc-ref record "id"))
-                                                          (format #t "created: ~a~%" (assoc-ref record "created"))
-                                                          (format #t "operator: ~a~%" operator)
-                                                          (format #t "message: ~a~%" (assoc-ref record "message"))
-                                                          (newline)))))
+                                               (when (not (string=? operator "service"))
+                                                 (format #t "id: ~a~%" (assoc-ref record "id"))
+                                                 (format #t "created: ~a~%" (assoc-ref record "created"))
+                                                 (format #t "operator: ~a~%" operator)
+                                                 (format #t "message: ~a~%" (assoc-ref record "message"))
+                                                 (newline))))
                                            (assoc-ref (history->scm #:account (car args)
                                                                     #:page page)
                                                       "content"))
-                                 (cons page
-                                       (fetch-page (1+ page))))))))
-      (fetch-page 1))))
+                                 (cons page (fetch-page (1+ page))))))))
+      (fetch-page 5))))
