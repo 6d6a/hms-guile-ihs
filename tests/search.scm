@@ -1,5 +1,5 @@
 ;;; Guile IHS --- IHS command-line interface.
-;;; Copyright © 2018 Oleg Pykhalov <go.wigust@gmail.com>
+;;; Copyright © 2018, 2019 Oleg Pykhalov <go.wigust@gmail.com>
 ;;;
 ;;; This file is part of Guile IHS.
 ;;;
@@ -886,38 +886,46 @@ id: 208112
         (string=? (with-output-to-string
                     (lambda ()
                       (ihs-web-search "ac-208112.ru")))
-                      "\
+                  "\
 name: ac-208112.ru
 id: 5ac4a28837c47a00072b934f
 account: 208112
+active: false
 
 name: dnl.ac-208112.ru
 id: 5ace0f8cc45c1900076e3f15
 account: 208112
+active: true
 
 name: foo.ac-208112.ru
 id: 5af81d14bc72bf0007c610a6
 account: 208112
+active: false
 
 name: iqrealt.ac-208112.ru
 id: 5af81673bc72bf0007c610a5
 account: 208112
+active: false
 
 name: joomla.ac-208112.ru
 id: 5ac4d8c2307559000713246a
 account: 208112
+active: true
 
 name: ng-87662-287.ac-208112.ru
 id: 5b3f0a549f559a00071fd0c0
 account: 208112
+active: true
 
 name: opencart.ac-208112.ru
 id: 5ac4d7333075590007132464
 account: 208112
+active: true
 
 name: wordpress.ac-208112.ru
 id: 5ac4a9d937c47a00072b9358
 account: 208112
+active: true
 
 ")))
 
