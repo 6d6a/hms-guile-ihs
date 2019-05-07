@@ -18,7 +18,8 @@
 
 (define-module (ihs scripts web)
   #:use-module ((guix scripts) #:select (parse-command-line))
-  #:use-module ((guix ui) #:select (colorize-string G_ leave))
+  #:use-module ((guix ui) #:select (G_ leave))
+  #:use-module (guix colors)
   #:use-module (guix build utils)
   #:use-module (guix import utils)
   #:use-module (guix records)
@@ -177,12 +178,12 @@ numbers, etc.) to names.") #f #f
                    #:key (colorize? (color-output? port)) (good? #t))
   (define good
     (if colorize?
-        (cut colorize-string <> 'GREEN 'BOLD)
+        (cut colorize-string <> 'GREEN)
         identity))
 
   (define failure
     (if colorize?
-        (cut colorize-string <> 'RED 'BOLD)
+        (cut colorize-string <> 'RED)
         identity))
 
   (if (string=? value "true")
