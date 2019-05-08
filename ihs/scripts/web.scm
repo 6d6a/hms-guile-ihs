@@ -178,12 +178,12 @@ numbers, etc.) to names.") #f #f
                    #:key (colorize? (color-output? port)) (good? #t))
   (define good
     (if colorize?
-        (cut colorize-string <> 'GREEN)
+        (cut colorize-string <> (color GREEN BOLD))
         identity))
 
   (define failure
     (if colorize?
-        (cut colorize-string <> 'RED)
+        (cut colorize-string <> (color RED BOLD))
         identity))
 
   (if (string=? value "true")
