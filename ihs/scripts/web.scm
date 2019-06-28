@@ -110,6 +110,8 @@ Fetch data about user.\n"))
   (newline)
   (display (G_ "The valid values for ACTION are:\n"))
   (newline)
+  (display (G_ "
+  -f, --format=FORMAT    display information in the given FORMAT"))
   (display (G_ "\
    billing               open web billing to edit account settings\n"))
   (display (G_ "\
@@ -154,7 +156,12 @@ Fetch data about user.\n"))
 
 (define %options
   ;; Specifications of the command-line options.
-  (list (option '(#\h "help") #f #f
+  (list (option '(#\f "format") #t #f
+                (lambda (opt name arg result)
+                  (unless (member arg '("json" "recutils"))
+                    (leave (G_ "~a: unsupported output format~%") arg))
+                  (alist-cons 'format (string->symbol arg) result)))
+        (option '(#\h "help") #f #f
                 (lambda args
                   (show-help)
                   (exit 0)))
@@ -162,7 +169,9 @@ Fetch data about user.\n"))
                 (lambda (opt name arg result)
                   (alist-cons 'do-not-resolve? #t result)))))
 
-(define %default-options '())
+(define %default-options
+  ;; Alist of default option values.
+  '((format . recutils)))
 
 (define isatty?*
   (mlambdaq (port)
@@ -341,6 +350,9 @@ Fetch data about user.\n"))
           (format #t "success: ~a~%" (colorize (serialize-boolean success)))))
        (newline)))))
 
+(define (account->scm account)
+  (fetch-account account))
+
 (define (serialize-account account)
   (if (string-prefix? "ac" account)
       (string-take-right account (- (string-length account)
@@ -351,7 +363,7 @@ Fetch data about user.\n"))
   (cut api <> "/website"))
 
 (define (account-websites->scm account)
-  (map hash-table->alist (json-string->scm (account-websites account))))
+  (account-websites account))
 
 (define account-ftp
   (cut api <> "/ftp-user"))
@@ -375,7 +387,7 @@ Fetch data about user.\n"))
   (cut api <> "/owner"))
 
 (define (account-owner->scm account)
-  (hash-table->alist (json-string->scm (account-owner account))))
+  (account-owner account))
 
 (define (resolve-subcommand name)
   (let ((module (resolve-interface
@@ -410,23 +422,38 @@ Fetch data about user.\n"))
               (string=? (assoc-ref entry "id") server)))
         (with-input-from-file %cache-file read)))
 
-(define (process-command command args opts)
+(define (process-command command args opts fmt)
   "Process COMMAND, one of the 'ihs server' sub-commands.  ARGS is its
 argument list and OPTS is the option alist."
   (let ((resolve? (assoc-ref opts 'do-not-resolve?)))
     (define (serialize-args procedure)
       (for-each (lambda (account)
-                  (procedure (account->scm account)))
+                  (let ((json (account->scm account)))
+                    (if (eq? fmt 'json)
+                        (display json)
+                        (procedure
+                         (hash-table->alist (json-string->scm json))))))
                 args))
 
     (define (serialize-website-args procedure)
       (for-each (lambda (account)
-                  (procedure (first (account-websites->scm account))))
+                  (let ((json (account-websites->scm account)))
+                    (if (eq? fmt 'json)
+                        (display json)
+                        (procedure
+                         (first
+                          (map hash-table->alist
+                               (json-string->scm json)))))))
                 args))
 
     (define (serialize-websites-args procedure)
       (for-each (lambda (account)
-                  (for-each procedure (account-websites->scm account)))
+                  (let ((json (account-websites->scm account)))
+                    (if (eq? fmt 'json)
+                        (display json)
+                        (for-each procedure
+                                  (map hash-table->alist
+                                       (json-string->scm json))))))
                 args))
 
     (define (format-user user)
@@ -731,11 +758,14 @@ argument list and OPTS is the option alist."
 
       ((owner)
        (for-each (lambda (account)
-                   (let ((owner (account-owner->scm account)))
-                     (format #t "account: ~a~%" (assoc-ref owner "personalAccountId"))
-                     (match (assoc-ref owner "contactInfo")
-                       ((_ _ _ _ _ _ (_ emails ...))
-                        (format #t "emails: ~a~%" (string-join emails ", "))))))
+                   (let ((json (account-owner->scm account)))
+                     (if (eq? fmt 'json)
+                         (display json)
+                         (let ((owner (hash-table->alist (json-string->scm json))))
+                           (format #t "account: ~a~%" (assoc-ref owner "personalAccountId"))
+                           (match (assoc-ref owner "contactInfo")
+                             ((_ _ _ _ _ _ (_ emails ...))
+                              (format #t "emails: ~a~%" (string-join emails ", "))))))))
                  args))
 
       ((show)
@@ -788,7 +818,7 @@ argument list and OPTS is the option alist."
                                (let ((website (assoc-ref website "id")))
                                  (website-ddos account website
                                                #:block? #t)))
-                             (account-websites->scm account)))
+                             (map hash-table->alist (json-string->scm (account-websites->scm account)))))
                  args))
 
       ((unblock)
@@ -799,7 +829,7 @@ argument list and OPTS is the option alist."
                                  ;; (format #t "Unblock: ~a ~a~%" website-name website-id)
                                  (website-ddos account website-id
                                                #:block? #f)))
-                             (account-websites->scm account)))
+                             (map hash-table->alist (json-string->scm (account-websites->scm account)))))
                  args))
 
       ((block-ip)
@@ -920,5 +950,6 @@ argument list and OPTS is the option alist."
                                    parse-sub-command))
          (args (map (compose serialize-account string-downcase)
                     (option-arguments opts)))
+         (format  (assq-ref opts 'format))
          (command (assoc-ref opts 'action)))
-    (process-command command args opts)))
+    (process-command command args opts format)))
