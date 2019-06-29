@@ -31,7 +31,6 @@
              (gnu packages guile)
              (gnu packages package-management)
              (gnu packages pkg-config)
-             (majordomo packages majordomo)
              (gnu packages tls)
              (guix build utils)
              (guix build-system gnu)
@@ -124,9 +123,7 @@ newspace."
                    (substitute* "config.scm"
                      (("@PACKAGE_NAME@") ,name)
                      (("@PACKAGE_VERSION@") ,version)
-                     (("@PACKAGE_URL@") ,home-page)
-                     (("@CVM@") (string-append (assoc-ref inputs "cvm")
-                                               "/bin/cvm")))
+                     (("@PACKAGE_URL@") ,home-page))
                    (install-file "config.scm"
                                  (path (assoc-ref outputs "out"))))
                  #t)))
@@ -138,8 +135,7 @@ newspace."
          ("automake" ,automake)
          ("pkg-config" ,pkg-config)))
       (inputs
-       `(("cvm" ,python-cvm)
-         ("gnutls" ,gnutls)
+       `(("gnutls" ,gnutls)
          ("guile" ,guile-2.2)
          ("guile-gcrypt" ,guile-gcrypt)
          ("guile-json" ,guile-json)
