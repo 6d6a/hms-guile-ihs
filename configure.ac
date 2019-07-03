@@ -35,6 +35,13 @@ AC_ARG_WITH([guix-site-ccache-dir],
   [guixccachedir="$withval"],
   [guixccachedir=""])
 
+AC_ARG_WITH([bash-completion-dir],
+  AC_HELP_STRING([--with-bash-completion-dir=DIR],
+    [name of the Bash completion directory]),
+  [bashcompletiondir="$withval"],
+  [bashcompletiondir='${sysconfdir}/bash_completion.d'])
+AC_SUBST([bashcompletiondir])
+
 dnl If ccache dir is not specified, set it to the module dir.
 AS_IF([test "x$guixccachedir" = "x" -a \
             "x$guixmoduledir" != "x"],

@@ -66,7 +66,13 @@ newspace."
       (build-system gnu-build-system)
       (home-page "https://majordomo.ru/")
       (arguments
-       `(#:modules
+       `(#:configure-flags
+         (list
+          "--sysconfdir=/etc"
+          (string-append "--with-bash-completion-dir="
+                         (assoc-ref %outputs "out")
+                         "/etc/bash_completion.d"))
+         #:modules
          ((guix build gnu-build-system)
           (guix build utils)
           (srfi srfi-26)
