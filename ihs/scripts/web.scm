@@ -276,16 +276,22 @@ numbers, etc.) to names.") #f #f
            (alist-cons 'action action result))
           (else (leave (G_ "~a: unknown action~%") action))))))
 
-(define (fetch-account account)
+(define (api account path)
   (let-values (((response body)
-                (http-get (string-append "https://api.majordomo.ru/" account
-                                         "/account")
+                (http-get (string-append "https://api.majordomo.ru/"
+                                         account path)
                           #:headers `((content-type
                                        . (application/json))
                                       (Authorization
                                        . ,(format #f "Bearer ~a" (auth))))
                           #:keep-alive? #t)))
     (utf8->string body)))
+
+(define (fetch-account account)
+  (api account "/account"))
+
+(define (account->scm account)
+  (hash-table->alist (json-string->scm (fetch-account account))))
 
 (define* (website-ddos account website #:key block?)
   "Block WEBSITE by id in ACCOUNT."
@@ -334,9 +340,6 @@ numbers, etc.) to names.") #f #f
           (format #t "success: ~a~%" (colorize (serialize-boolean success)))))
        (newline)))))
 
-(define (account->scm account)
-  (hash-table->alist (json-string->scm (fetch-account account))))
-
 (define (serialize-account account)
   (if (string-prefix? "ac" account)
       (string-take-right account (- (string-length account)
@@ -344,56 +347,31 @@ numbers, etc.) to names.") #f #f
       account))
 
 (define (account-websites account)
-  (let-values (((response body)
-                (http-get (string-append "https://api.majordomo.ru/" account "/website")
-                          #:headers `((content-type . (application/json))
-                                      (Authorization . ,(format #f "Bearer ~a" (auth))))
-                          #:keep-alive? #t)))
-    (utf8->string body)))
+  (api account "/website"))
 
 (define (account-websites->scm account)
   (map hash-table->alist (json-string->scm (account-websites account))))
 
 (define (account-ftp account)
-  (let-values (((response body)
-                (http-get (string-append "https://api.majordomo.ru/" account "/ftp-user")
-                          #:headers `((content-type . (application/json))
-                                      (Authorization . ,(format #f "Bearer ~a" (auth))))
-                          #:keep-alive? #t)))
-    (utf8->string body)))
+  (api account "/ftp-user"))
 
 (define (account-ftp->scm account)
   (map hash-table->alist (json-string->scm (account-ftp account))))
 
 (define (account-mailbox account)
-  (let-values (((response body)
-                (http-get (string-append "https://api.majordomo.ru/" account "/mailbox")
-                          #:headers `((content-type . (application/json))
-                                      (Authorization . ,(format #f "Bearer ~a" (auth))))
-                          #:keep-alive? #t)))
-    (utf8->string body)))
+  (api account "/mailbox"))
 
 (define (account-mailbox->scm account)
   (map hash-table->alist (json-string->scm (account-mailbox account))))
 
 (define (account-database account)
-  (let-values (((response body)
-                (http-get (string-append "https://api.majordomo.ru/" account "/database")
-                          #:headers `((content-type . (application/json))
-                                      (Authorization . ,(format #f "Bearer ~a" (auth))))
-                          #:keep-alive? #t)))
-    (utf8->string body)))
+  (api account "/database"))
 
 (define (account-database->scm account)
   (map hash-table->alist (json-string->scm (account-database account))))
 
 (define (account-owner account)
-  (let-values (((response body)
-                (http-get (string-append "https://api.majordomo.ru/" account "/owner")
-                          #:headers `((content-type . (application/json))
-                                      (Authorization . ,(format #f "Bearer ~a" (auth))))
-                          #:keep-alive? #t)))
-    (utf8->string body)))
+  (api account "/owner"))
 
 (define (account-owner->scm account)
   (hash-table->alist (json-string->scm (account-owner account))))
