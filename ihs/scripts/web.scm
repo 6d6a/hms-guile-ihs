@@ -346,32 +346,32 @@ numbers, etc.) to names.") #f #f
                                     (string-length "ac_")))
       account))
 
-(define (account-websites account)
-  (api account "/website"))
+(define account-websites
+  (cut api <> "/website"))
 
 (define (account-websites->scm account)
   (map hash-table->alist (json-string->scm (account-websites account))))
 
-(define (account-ftp account)
-  (api account "/ftp-user"))
+(define account-ftp
+  (cut api <> "/ftp-user"))
 
 (define (account-ftp->scm account)
   (map hash-table->alist (json-string->scm (account-ftp account))))
 
-(define (account-mailbox account)
-  (api account "/mailbox"))
+(define account-mailbox
+  (cut api <> "/mailbox"))
 
 (define (account-mailbox->scm account)
   (map hash-table->alist (json-string->scm (account-mailbox account))))
 
-(define (account-database account)
-  (api account "/database"))
+(define account-database
+  (cut api <> "/database"))
 
 (define (account-database->scm account)
   (map hash-table->alist (json-string->scm (account-database account))))
 
-(define (account-owner account)
-  (api account "/owner"))
+(define account-owner
+  (cut api <> "/owner"))
 
 (define (account-owner->scm account)
   (hash-table->alist (json-string->scm (account-owner account))))
