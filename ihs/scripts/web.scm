@@ -141,6 +141,8 @@ Fetch data about user.\n"))
    show                  show user\n"))
   (display (G_ "\
    unix                  show unix account\n"))
+  (display (G_ "\
+   website               show websites on account\n"))
   (newline)
   (display (G_ "
   -h, --help             display this help and exit"))
