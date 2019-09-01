@@ -1,0 +1,263 @@
+\input texinfo   @c -*-texinfo-*-
+@c %**start of header
+@setfilename ihs.info
+@documentencoding UTF-8
+@documentlanguage ru
+@settitle Руководство по Guile IHS
+@c %**end of header
+
+@titlepage
+@title Guile IHS
+@subtitle Руководство по Guile IHS
+@author Oleg Pyhalov <pyhalov@@majordomo.ru>
+@page
+@vskip 0pt plus 1filll
+@insertcopying
+@end titlepage
+
+@menu
+* Введение::
+* Установка::
+* Вызов ihs::
+* Index::
+@end menu
+
+@node Введение
+@chapter Введение
+
+Guile IHS - интерфейс командной строки к @uref{https://hms.majordomo.ru/api/,
+HMS API Majordomo} и @uref{https://billing2.intr, Billing2 API}.
+
+@example
+user@@workstation:~$ ihs web website ac_123456 | recsel -e 'name="example.ru"' -p name,document_root
+name: example.ru
+document_root: example.ru/www
+
+user@@workstation:~$ ihs web block ac_123456
+action_id: 5d6b9bc62376b1234560de1f
+operation_id: 5d6b9bc62376b1234560de1e
+ddos_protection: true
+resource_id: 5ac4a2f137c1234567899350
+success: true
+@dots{}
+
+user@@workstation:~$ ihs web unix ac_123456
+quota: 1.34/10.0 GB
+server_id: web_server_134
+server_name: web33
+name: u1234
+home_dir: /home/u1234
+
+user@@workstation:~$ ihs web history ac_123456 | less
+id: 5d67cb17b6431000019f9b19
+created: 2019-08-29 15:54:47
+operator: AC_123456 (ivanov)
+message: Поступила заявка на добавление домена (имя: example.ru)
+@dots{}
+
+user@@workstation:~$ ihs web domain --no-resolve ac_123456 | recsel -e 'name="example.ru"'
+name: example.ru
+records: example.ru 3600 IN SOA ns.majordomo.ru. support.majordomo.ru. 2004032900 3600 900 3600000 3600
++ example.ru 3600 IN NS ns.majordomo.ru
++ example.ru 3600 IN NS ns2.majordomo.ru
++ example.ru 3600 IN NS ns3.majordomo.ru
++ example.ru 3600 IN A 185.84.108.20
++ example.ru 3600 IN A 185.84.108.20
++ example.ru 3600 IN MX mmxs.majordomo.ru
++ example.ru 3600 IN CNAME smtp.majordomo.ru
++ example.ru 3600 IN CNAME pop3.majordomo.ru
++ example.ru 3600 IN CNAME mail.majordomo.ru
+@end example
+
+@node Установка
+@chapter Установка
+
+Этот раздел объясняет, как установить IHS на компьютер.  Устновка может быть
+выполнена распаковкой архива, содержащего бинарную копию программы, а также с
+помощью пакетного менеджера @uref{http://guix.gnu.org/manual/ru/html_node/,
+Guix}.
+
+@cindex установка
+
+@menu
+* Бинарная установка::
+* Установка в Guix::
+@end menu
+
+@node Бинарная установка
+@section Бинарная установка
+
+@cindex tar
+
+Установить через распаковку архива:
+
+@example
+user@@workstation:~$ wget https://ihs.intr/ihs-binary-1.0.0.x86_64-linux.tar.gz
+user@@workstation:~$ mkdir ihs
+user@@workstation:~$ cd ihs
+user@@workstation:~$ tar xf ../ihs-binary-1.0.0.x86_64-linux.tar.gz
+@end example
+
+Команды вида @code{export} следует добавить в свой @file{~/.bashrc} файл чтобы
+не вводить их повторно при открытии нового терминала.  Также стоит добавить
+команду с точкой для работы автодополнения.
+
+@example
+export PATH="$HOME/ihs/bin:$PATH"
+export GUIX_LOCPATH="$HOME/ihs/lib/locale"
+export IHS_USER='ivanov'
+export IHS_PASS='qwerty123'
+export CVM_USER='lebedev'
+export CVM_PASS='pass123'
+. "$HOME/etc/bash_completion.d/ihs"
+@end example
+
+После добавления команд выполнить:
+@example
+user@@workstation:~$ . ~/.bashrc
+@end example
+
+@node Установка в Guix
+@section Установка в Guix
+
+@cindex guix
+
+Установка может быть выполнена добавлением
+@uref{https://gitlab.wugi.info/guix/guix-majordomo, Majordomo Guix channel}
+после установки пакетного менеджера @uref{https://guix.gnu.org/, Guix}.
+
+@node Вызов ihs
+@chapter Вызов ihs
+
+Этот раздел показывает основные возможности IHS.
+
+@menu
+* Вызов ihs web::
+* Вызов ihs vm::
+@end menu
+
+@node Вызов ihs web
+@section Вызов ihs web
+
+@cindex hms web shared
+
+Команды @code{ihs web} выводят информацию об аккаунтах виртуального хостинга,
+предоставляют возможность установки DDoS заглушки на сайтах и прочее. Прежде
+всего необходимо выполнить @code{ihs pull}, загрузив информацию о серверах.
+После будут доступны следующие команды:
+
+@table @code
+
+@item billing @var{account} @dots{}
+Открыть @var{аккаунт} в HMS билинг в WEB браузере.
+
+@item block-ip @var{ip} @dots{}
+Заблокировать @var{IP} в NGINX на @var{сервере виртуального хостинга}.
+@example
+ihs web block-ip web33:95.55.190.61
+@end example
+
+@item block @var{account} @dots{}
+Включить на всех сайтах @var{аккаунта} DDoS заглушку.
+
+@item unblock @var{account} @dots{}
+Отключить на всех сайтах @var{аккаунта} DDoS заглушку.
+
+@item database @var{account} @dots{}
+Вывести базы данных на @var{аккаунте}.
+
+@item database-user @var{account} @dots{}
+Вывести пользователей баз данных на @var{аккаунте}.
+
+@item domain @var{account} @dots{}
+Вывести информацию по доменам на @var{аккаунте}.
+
+@item dump @var{account} @dots{}
+Вывести всю доступную информацию по @var{аккаунту}.
+
+@item ftp @var{account} @dots{}
+Вывести информацию по FTP пользователям на @var{аккаунте}.
+
+@item mailbox @var{account} @dots{}
+Вывести информацию по почтовым ящикам на @var{аккаунте}.
+
+@item owner @var{account} @dots{}
+Показать владельца @var{аккаунта}.
+
+@item open @var{account} @dots{}
+Открыть билинг страницу @var{аккаунта} в браузере
+@uref{https://www.mozilla.org, Firefox}, предваритально создав новый профиль в
+директории @file{/tmp/НОМЕР_АККАУНТА}.  Полезно при необходимости работы с
+множеством аккаунтов одновременно.
+
+@item pull
+Загрузить информацию о серверах, которая используется при в других командах
+@code{ihs web}, например для отображения названия сервера вместо его
+индентификатора.
+
+@item show @var{account} @dots{}
+Показать основную информацию об @var{аккаунте}: активен ли он, отправку
+уведомлений, кредит.
+
+@item server-show @var{server} @dots{}
+Вывести основную информацию по @var{серверу}.
+
+@example
+user@@workstation:~$ ihs web server-show web33
+id: web_server_134
+name: web33
+online: true
+@end example
+
+@item server-socket @var{server} @dots{}
+Вывести сокеты @var{сервера}.
+
+@item server-storage @var{server} @dots{}
+Вывести диски @var{сервера}.
+
+@item server-service @var{server} @dots{}
+Вывести сервисы @var{сервера}.
+
+@item unix @var{account} @dots{}
+Вывевести информацию по UNIX @var{аккаунту}.
+
+@item website @var{account} @dots{}
+Вывевести информацию по сайтам на @var{аккаунте}.
+
+@end table
+
+@node Вызов ihs vm
+@section Вызов ihs vm
+
+Команды @code{ihs web} выводят информацию об аккаунтах VPS хостинга и VPS
+серверах, например пароли и операционную систему.
+
+@table @code
+
+@item dump @var{account} @dots{}
+Вывести всю доступную информацию по @var{аккаунту}.
+
+@item show @var{account} @dots{}
+Вывести информацию по @var{аккаунту}.
+
+@item ip @var{server} @dots{}
+Вывести IP-адрес @var{сервера}.
+
+@item passwords @var{server} @dots{}
+Вывести пароли @var{сервера}.
+
+@item plan @var{account} @dots{}
+Вывести информацию по оплате @var{аккаунта}.
+
+@item server @var{server} @dots{}
+Вывести информацию по @var{серверу}.
+
+@item template @var{server} @dots{}
+Показать операционную систему, которая была установлена во время заказа
+@var{сервера}.
+
+@end table
+
+@bye
+
+@c ihs.texi ends here
