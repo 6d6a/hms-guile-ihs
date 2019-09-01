@@ -136,7 +136,15 @@ Fetch data about user.\n"))
   (display (G_ "\
    owner                 show account owner\n"))
   (display (G_ "\
-   service               search for existing service types\n"))
+   pull                  pull information about servers\n"))
+  (display (G_ "\
+   server-show           show server\n"))
+  (display (G_ "\
+   server-socket         show server's socket\n"))
+  (display (G_ "\
+   server-storage        show server's storages\n"))
+  (display (G_ "\
+   server-service        show server's services\n"))
   (display (G_ "\
    open                  open billing\n"))
   (display (G_ "\
