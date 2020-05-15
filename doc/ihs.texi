@@ -123,7 +123,7 @@ user@@workstation:~$ . ~/.bashrc
 @cindex guix
 
 Установка может быть выполнена добавлением
-@uref{https://gitlab.wugi.info/guix/guix-majordomo, Majordomo Guix channel}
+@uref{https://gitlab.intr/package-management/guix-majordomo, Majordomo Guix channel}
 после установки пакетного менеджера @uref{https://guix.gnu.org/, Guix}.
 
 @node Вызов ihs

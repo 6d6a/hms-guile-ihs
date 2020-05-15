@@ -2,7 +2,7 @@
 к [API Majordomo](https://hms.majordomo.ru/api/).
 
 Установка может быть выполнена добавлением
-[Majordomo Guix channel](https://gitlab.wugi.info/guix/guix-majordomo)
+[Majordomo Guix channel](https://gitlab.intr/package-management/guix-majordomo)
 после установки пакетного менеджера [Guix](https://guix.gnu.org/).
 
 ## Автодополнение
