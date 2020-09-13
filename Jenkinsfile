@@ -10,7 +10,7 @@ pipeline {
                     output = sh (script: (["guix", "time-machine",
                                            "--channels=channels.scm",
                                            "--commit=5b7a1cb077931a020c0b7e3b12f12a7bda221d96",
-                                           "--url=${Constants.gitGuixUrl}",
+                                           "--url=${library('jenkins-wi-shared-library').Constants.gitGuixUrl}",
                                            "--", "build", "-f", "guix.scm"].join(" ")),
                                  returnStdout: true)
                 }
