@@ -1,5 +1,5 @@
 ;;; Guile IHS --- IHS command-line interface.
-;;; Copyright © 2018, 2019 Oleg Pykhalov <go.wigust@gmail.com>
+;;; Copyright © 2018, 2019, 2020 Oleg Pykhalov <go.wigust@gmail.com>
 ;;;
 ;;; This file is part of Guile IHS.
 ;;;
@@ -150,6 +150,8 @@ Fetch data about user.\n"))
   (display (G_ "\
    show                  show user\n"))
   (display (G_ "\
+   toggle                toggle account state\n"))
+  (display (G_ "\
    unix                  show unix account\n"))
   (display (G_ "\
    website               show websites on account\n"))
@@ -289,8 +291,9 @@ Fetch data about user.\n"))
       (let ((action (string->symbol arg)))
         (case action
           ((billing block-ip database database-user domain dump ftp history
-            mailbox owner search service show open pull unix website block unblock
-            server-show server-socket server-storage server-service)
+            mailbox owner search service show open toggle pull unix website
+            block unblock server-show server-socket server-storage
+            server-service)
            (alist-cons 'action action result))
           (else (leave (G_ "~a: unknown action~%") action))))))
 
@@ -307,6 +310,14 @@ Fetch data about user.\n"))
 
 (define (fetch-account account)
   (api account "/account"))
+
+(define (toggle-account account)
+  (http-post (string-append "https://api.majordomo.ru/"
+                            account "/account/toggle_state")
+             #:headers `((content-type . (application/json))
+                         (Authorization . ,(format #f "Bearer ~a" (auth))))
+             #:body "{}"
+             #:keep-alive? #t))
 
 (define (account->scm account)
   (hash-table->alist (json-string->scm (fetch-account account))))
@@ -818,6 +829,12 @@ argument list and OPTS is the option alist."
                                                               "&refresh=" (assoc-ref records "refresh_token")))))
                                    (_ #f))
                                  (assoc-ref json "params")))))
+                 args))
+
+      ((toggle)
+       (for-each (lambda (account)
+                   (format #t "Toggle account state: ~a~%" account)
+                   (toggle-account account))
                  args))
 
       ((block)
