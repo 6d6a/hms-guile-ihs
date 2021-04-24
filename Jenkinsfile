@@ -1,6 +1,6 @@
 pipeline {
     agent {
-        label "vm"
+        label "guixsd"
     }
     stages {
         stage("Invoking guix build") {
@@ -17,7 +17,6 @@ pipeline {
             }
         }
         stage("Install on nodes") {
-            agent { label "guixsd" }
             steps {
                 sh "guix copy --from=spb ${output}"
                 sh "guix install ${output}"
