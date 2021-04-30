@@ -9,7 +9,7 @@ pipeline {
                     writeFile file: "channels.scm", text: "%default-channels"
                     output = sh (script: (["guix", "time-machine",
                                            "--channels=channels.scm",
-                                           "--commit=5b7a1cb077931a020c0b7e3b12f12a7bda221d96",
+                                           "--commit=d68de958b60426798ed62797ff7c96c327a672ac",
                                            "--url=${library('jenkins-wi-shared-library').Constants.gitGuixUrl}",
                                            "--", "build", "-f", "guix.scm"].join(" ")),
                                  returnStdout: true)
