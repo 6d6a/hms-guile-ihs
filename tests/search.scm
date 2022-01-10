@@ -1,5 +1,5 @@
 ;;; Guile IHS --- IHS command-line interface.
-;;; Copyright © 2018, 2019 Oleg Pykhalov <go.wigust@gmail.com>
+;;; Copyright © 2018, 2019, 2022 Oleg Pykhalov <go.wigust@gmail.com>
 ;;;
 ;;; This file is part of Guile IHS.
 ;;;
@@ -846,7 +846,7 @@
 (test-begin "search")
 
 (test-assert "ihs-search-owner"
-  (mock ((ihs scripts web search) search-owner
+  (mock ((ihs hms) search-owner
          (lambda (owner)
            (match owner
              ("go.wigust@gmail.com" test-search-owner-json)
@@ -863,7 +863,7 @@ type: INDIVIDUAL
 ")))
 
 (test-assert "ihs-search-account"
-  (mock ((ihs scripts web search) search-account
+  (mock ((ihs hms) search-account
          (lambda (account)
            (match (serialize-account account)
              ("208112" test-search-account-json)
@@ -878,7 +878,7 @@ id: 208112
 ")))
 
 (test-assert "ihs-search-domain"
-  (mock ((ihs scripts web search) search-domain
+  (mock ((ihs hms) search-domain
          (lambda (domain)
            (match domain
              ("ac-208112.ru" test-search-domain-json)

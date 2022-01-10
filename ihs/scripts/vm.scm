@@ -1,5 +1,5 @@
 ;;; Guile IHS --- IHS command-line interface.
-;;; Copyright © 2018, 2019 Oleg Pykhalov <go.wigust@gmail.com>
+;;; Copyright © 2018, 2019, 2022 Oleg Pykhalov <go.wigust@gmail.com>
 ;;;
 ;;; This file is part of Guile IHS.
 ;;;
@@ -20,6 +20,7 @@
   #:use-module ((guix scripts) #:select (parse-command-line))
   #:use-module ((guix ui) #:select (G_ leave))
   #:use-module (guix import utils)
+  #:use-module (ihs billing2)
   #:use-module (ihs config)
   #:use-module (ihs scripts)
   #:use-module (ihs ui)
@@ -34,7 +35,6 @@
   #:use-module (ice-9 popen)
   #:use-module (ice-9 rdelim)
   #:export (vm->scm
-            fetch-vm
             ihs-vm))
 
 (define (show-help)
@@ -79,22 +79,16 @@ numbers, etc.) to names.") #f #f
 
 (define %default-options '())
 
-(define (fetch-vm account)
-  (let* ((port   (apply open-pipe* OPEN_READ %cvm (list account)))
-         (output (read-string port)))
-    (close-port port)
-    (delete "" (string-split output #\newline))))
-
 (define (vm->scm account)
-  (assoc-ref (hash-table->alist (json-string->scm (match (fetch-vm account)
-                                                    ((account password)
-                                                     account))))
+  (assoc-ref (json-string->scm (match (fetch-vm account)
+                                 ((account password)
+                                  account)))
              "vds_account"))
 
 (define (passwords->scm account)
-  (assoc-ref (hash-table->alist (json-string->scm (match (fetch-vm account)
-                                                    ((account password)
-                                                     password))))
+  (assoc-ref (json-string->scm (match (fetch-vm account)
+                                 ((account password)
+                                  password)))
              "vds_passwords"))
 
 (define (parse-sub-command arg result)
@@ -177,7 +171,7 @@ numbers, etc.) to names.") #f #f
                                            (assoc-ref vds-password "login")
                                            (assoc-ref vds-password "password"))
                                    (newline))
-                                 vds-passwords))
+                                 (array->list vds-passwords)))
                    (newline)))))
             args))
 

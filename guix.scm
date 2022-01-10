@@ -1,5 +1,5 @@
 ;;; Guile IHS --- IHS command-line interface.
-;;; Copyright © 2018, 2019 Oleg Pykhalov <go.wigust@gmail.com>
+;;; Copyright © 2018, 2019, 2022 Oleg Pykhalov <go.wigust@gmail.com>
 ;;;
 ;;; This file is part of Guile IHS.
 ;;;
@@ -59,7 +59,7 @@ newspace."
   (let ((commit (current-commit)))
     (package
       (name "guile-ihs")
-      (version (string-append "0.0.1" "-" (string-take commit 7)))
+      (version (string-append "1.0.0" "-" (string-take commit 7)))
       (source (local-file %source-dir
                           #:recursive? #t
                           #:select? (git-predicate %source-dir)))
@@ -80,6 +80,42 @@ newspace."
           (ice-9 rdelim))
          #:phases
          (modify-phases %standard-phases
+           (add-after 'configure 'set-env
+             (lambda* (#:key inputs outputs #:allow-other-keys)
+               ;; Make sure the 'guix' command finds GnuTLS,
+               ;; Guile-JSON, and Guile-Git automatically.
+               (let* ((out    (assoc-ref outputs "out"))
+                      (guile  (assoc-ref inputs "guile"))
+                      (gcrypt (assoc-ref inputs "guile-gcrypt"))
+                      (gnutls (assoc-ref inputs "gnutls"))
+                      (guix   (assoc-ref inputs "guix"))
+                      (json   (assoc-ref inputs "guile-json"))
+                      (deps   (list gcrypt gnutls guix json out))
+                      (effective
+                       (read-line
+                        (open-pipe* OPEN_READ
+                                    (string-append guile "/bin/guile")
+                                    "-c" "(display (effective-version))")))
+                      (path   (string-join
+                               (map (cut string-append <>
+                                         "/share/guile/site/"
+                                         effective)
+                                    deps)
+                               ":"))
+                      (gopath (string-join
+                               (map (cut string-append <>
+                                         "/lib/guile/" effective
+                                         "/site-ccache")
+                                    deps)
+                               ":")))
+
+                 (setenv "COLUMNS" "999")
+                 (setenv "GUILE_LOAD_PATH" path)
+                 (format #t "GUILE_LOAD_PATH: ~a\n" path)
+                 (setenv "GUILE_LOAD_COMPILED_PATH" gopath)
+                 (format #t "GUILE_LOAD_COMPILED_PATH: ~a\n" gopath)
+
+                 #t)))
            (add-after 'install 'wrap-program
              (lambda* (#:key inputs outputs #:allow-other-keys)
                ;; Make sure the 'guix' command finds GnuTLS,
@@ -142,9 +178,9 @@ newspace."
          ("pkg-config" ,pkg-config)))
       (inputs
        `(("gnutls" ,gnutls)
-         ("guile" ,guile-2.2)
+         ("guile" ,guile-3.0-latest)
          ("guile-gcrypt" ,guile-gcrypt)
-         ("guile-json" ,guile-json)
+         ("guile-json" ,guile-json-4)
          ("guix" ,guix)))
       (synopsis "Guile interface to Majordomo API")
       (description

@@ -381,8 +381,8 @@
 (test-begin "account")
 
 (test-assert "ihs-website"
-  (mock ((ihs scripts web) account-websites
-         (lambda (account)
+  (mock ((ihs hms) api
+         (lambda (account path)
            (match (serialize-account account)
              ("208112" test-website-json)
              (_ (error "Nonexistent account: " account)))))
@@ -436,8 +436,8 @@ records: ac-208112.ru 3600 IN SOA ns.majordomo.ru. support.majordomo.ru. 2004032
 "))))))
 
 (test-assert "ihs-web"
-  (mock ((ihs scripts web) fetch-account
-         (lambda (account)
+  (mock ((ihs hms) api
+         (lambda (account path)
            (match (serialize-account account)
              ("208112" test-account-json)
              (_ (error "Nonexistent account: " account)))))

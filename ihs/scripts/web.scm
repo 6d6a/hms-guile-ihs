@@ -1,5 +1,5 @@
 ;;; Guile IHS --- IHS command-line interface.
-;;; Copyright © 2018, 2019, 2020 Oleg Pykhalov <go.wigust@gmail.com>
+;;; Copyright © 2018, 2019, 2020, 2022 Oleg Pykhalov <go.wigust@gmail.com>
 ;;;
 ;;; This file is part of Guile IHS.
 ;;;
@@ -23,6 +23,7 @@
   #:use-module (guix build utils)
   #:use-module (guix import utils)
   #:use-module (guix records)
+  #:use-module (ihs hms)
   #:use-module (ihs scripts)
   #:use-module (ihs ui)
   #:use-module (ihs utils)
@@ -39,7 +40,6 @@
   #:use-module (srfi srfi-37)
   #:use-module (web client)
   #:export (account->scm
-            auth
             ihs-web
             serialize-account
 
@@ -47,35 +47,8 @@
             account-websites->scm
 
             update-cache
-            fetch-server
 
             colorize))
-
-(define* (auth #:key (user (getenv "IHS_USER")) (pass (getenv "IHS_PASS")))
-  (letrec-syntax ((option (syntax-rules ()
-                            ((_ key value)
-                             (if value
-                                 (list (string-append key "=" value))
-                                 '()))))
-                  (key/value (syntax-rules ()
-                               ((_ (key value) rest ...)
-                                (append (option key value)
-                                        (key/value rest ...)))
-                               ((_)
-                                '()))))
-    (assoc-ref (let-values
-                   (((response body)
-                     (http-post "https://api.majordomo.ru/oauth/token"
-                                #:headers `((content-type . (application/x-www-form-urlencoded)))
-                                #:keep-alive? #t
-                                #:body (string-join (key/value ("grant_type" "password")
-                                                               ("client_id" "frontend_app")
-                                                               ("client_secret" "frontend_app_secret")
-                                                               ("username" user)
-                                                               ("password" pass))
-                                                    "&"))))
-                 (hash-table->alist (json-string->scm (utf8->string body))))
-               "access_token")))
 
 (define (quote-string str)
   (string-append "\"" str "\""))
@@ -297,17 +270,6 @@ Fetch data about user.\n"))
            (alist-cons 'action action result))
           (else (leave (G_ "~a: unknown action~%") action))))))
 
-(define (api account path)
-  (let-values (((response body)
-                (http-get (string-append "https://api.majordomo.ru/"
-                                         account path)
-                          #:headers `((content-type
-                                       . (application/json))
-                                      (Authorization
-                                       . ,(format #f "Bearer ~a" (auth))))
-                          #:keep-alive? #t)))
-    (utf8->string body)))
-
 (define (fetch-account account)
   (api account "/account"))
 
@@ -320,7 +282,7 @@ Fetch data about user.\n"))
              #:keep-alive? #t))
 
 (define (account->scm account)
-  (hash-table->alist (json-string->scm (fetch-account account))))
+  (array->list (json-string->scm (fetch-account account))))
 
 (define* (website-ddos account website #:key block?)
   "Block WEBSITE by id in ACCOUNT."
@@ -343,7 +305,7 @@ Fetch data about user.\n"))
                      OPEN_READ))
          (output (read-string port))
          (action-record
-          (alist->record (hash-table->alist
+          (alist->record (array->list
                           (json-string->scm (string-trim-right output
                                                                #\newline)))
                          make-account-action
@@ -388,19 +350,19 @@ Fetch data about user.\n"))
   (cut api <> "/ftp-user"))
 
 (define (account-ftp->scm account)
-  (map hash-table->alist (json-string->scm (account-ftp account))))
+  (array->list (json-string->scm (account-ftp account))))
 
 (define account-mailbox
   (cut api <> "/mailbox"))
 
 (define (account-mailbox->scm account)
-  (map hash-table->alist (json-string->scm (account-mailbox account))))
+  (array->list (json-string->scm (account-mailbox account))))
 
 (define account-database
   (cut api <> "/database"))
 
 (define (account-database->scm account)
-  (map hash-table->alist (json-string->scm (account-database account))))
+  (array->list (json-string->scm (account-database account))))
 
 (define account-owner
   (cut api <> "/owner"))
@@ -417,18 +379,8 @@ Fetch data about user.\n"))
 (define %cache-file
   (string-append (cache-directory) "/servers.scm"))
 
-(define (fetch-server)
-  (let-values (((response body)
-                (http-get (string-append "https://api.majordomo.ru/rc-staff\
-/server")
-                          #:headers `((content-type . (application/json))
-                                      (Authorization . ,(format #f "Bearer ~a"
-                                                                (auth))))
-                          #:keep-alive? #t)))
-    (utf8->string body)))
-
 (define (server->scm)
-  (map hash-table->alist (json-string->scm (fetch-server))))
+  (array->list (json-string->scm (fetch-server))))
 
 (define (update-cache)
   (with-output-to-file %cache-file
@@ -451,7 +403,7 @@ argument list and OPTS is the option alist."
                     (if (eq? fmt 'json)
                         (display json)
                         (procedure
-                         (hash-table->alist (json-string->scm json))))))
+                         (json-string->scm json)))))
                 args))
 
     (define (serialize-website-args procedure)
@@ -461,7 +413,7 @@ argument list and OPTS is the option alist."
                         (display json)
                         (procedure
                          (first
-                          (map hash-table->alist
+                          (array->list
                                (json-string->scm json)))))))
                 args))
 
@@ -471,7 +423,7 @@ argument list and OPTS is the option alist."
                     (if (eq? fmt 'json)
                         (display json)
                         (for-each procedure
-                                  (map hash-table->alist
+                                  (array->list
                                        (json-string->scm json))))))
                 args))
 
@@ -509,16 +461,16 @@ argument list and OPTS is the option alist."
       (format #t "auto_sub_domain: ~a~%"
               (colorize (serialize-boolean (assoc-ref website "autoSubDomain"))))
       (format #t "index_file_list: ~a~%"
-              (string-join (sort (assoc-ref website "indexFileList")
+              (string-join (sort (array->list (assoc-ref website "indexFileList"))
                                  string<)))
       (format #t "static_file_extensions: ~a~%"
-              (string-join (sort (assoc-ref website "staticFileExtensions")
+              (string-join (sort (array->list (assoc-ref website "staticFileExtensions"))
                                  string<)))
       (format #t "cgi_enabled: ~a~%"
               (colorize (serialize-boolean (assoc-ref website "cgiEnabled"))
                         #:good? #f))
       (format #t "cgi_file_extensions: ~a~%"
-              (string-join (assoc-ref website "cgiFileExtensions")))
+              (string-join (array->list (assoc-ref website "cgiFileExtensions"))))
       (format #t "infected: ~a~%"
               (colorize (serialize-boolean (assoc-ref website "infected"))))
       (format #t "ddos_protection: ~a~%"
@@ -548,7 +500,7 @@ argument list and OPTS is the option alist."
         (format #t "name: ~a~%" name)
         (unless resolve? (resolve-domain name)))
 
-      (match (assoc-ref domain "dnsResourceRecords")
+      (match (array->list (assoc-ref domain "dnsResourceRecords"))
         ((record records ...)
          (format #t "records: ~a ~a ~a ~a ~a\n"
                  (assoc-ref record "name")
@@ -660,12 +612,12 @@ argument list and OPTS is the option alist."
        (serialize-args format-user)
        (serialize-args
         (lambda (user)
-          (for-each format-service (assoc-ref user "services"))))
+          (for-each format-service (array->list (assoc-ref user "services")))))
        (serialize-websites-args format-website)
        (serialize-website-args format-unix)
        (serialize-websites-args
         (lambda (user)
-          (for-each format-domain (assoc-ref user "domains")))))
+          (for-each format-domain (array->list (assoc-ref user "domains"))))))
 
       ((ftp)
        (for-each (lambda (account)
@@ -780,7 +732,7 @@ argument list and OPTS is the option alist."
                    (let ((json (account-owner->scm account)))
                      (if (eq? fmt 'json)
                          (display json)
-                         (let ((owner (hash-table->alist (json-string->scm json))))
+                         (let ((owner (array->list (json-string->scm json))))
                            (format #t "account: ~a~%" (assoc-ref owner "personalAccountId"))
                            (match (assoc-ref owner "contactInfo")
                              ((_ _ _ _ _ _ (_ emails ...))
@@ -796,7 +748,7 @@ argument list and OPTS is the option alist."
       ((service)
        (serialize-args
         (lambda (user)
-          (for-each format-service (assoc-ref user "services")))))
+          (for-each format-service (array->list (assoc-ref user "services"))))))
 
       ((website)
        (serialize-websites-args format-website))
@@ -814,7 +766,7 @@ argument list and OPTS is the option alist."
                                                         (Authorization . ,(format #f "Bearer ~a" (auth))))
                                             #:body "{}"
                                             #:keep-alive? #t)))
-                     (let ((json (hash-table->alist (json-string->scm (utf8->string body)))))
+                     (let ((json (json-string->scm (utf8->string body))))
                        ;; TODO: Open browser for all accounts in parallel
                        (for-each (match-lambda
                                    (("token" records ...)
@@ -843,7 +795,7 @@ argument list and OPTS is the option alist."
                                (let ((website (assoc-ref website "id")))
                                  (website-ddos account website
                                                #:block? #t)))
-                             (map hash-table->alist (json-string->scm (account-websites->scm account)))))
+                             (array->list (json-string->scm (account-websites->scm account)))))
                  args))
 
       ((unblock)
@@ -854,7 +806,7 @@ argument list and OPTS is the option alist."
                                  ;; (format #t "Unblock: ~a ~a~%" website-name website-id)
                                  (website-ddos account website-id
                                                #:block? #f)))
-                             (map hash-table->alist (json-string->scm (account-websites->scm account)))))
+                             (array->list (json-string->scm (account-websites->scm account)))))
                  args))
 
       ((block-ip)
@@ -874,7 +826,7 @@ argument list and OPTS is the option alist."
       ((domain)
        (serialize-websites-args
         (lambda (user)
-          (for-each format-domain (assoc-ref user "domains")))))
+          (for-each format-domain (array->list (assoc-ref user "domains"))))))
 
       ((pull)
        (update-cache))
@@ -890,7 +842,7 @@ argument list and OPTS is the option alist."
                                     (format #t "id: ~a~%" (assoc-ref service "id"))
                                     (format #t "name: ~a~%" (assoc-ref service "name"))
                                     (newline))
-                                  services)))))
+                                  (array->list services))))))
                  args))
       ((server-storage)
        (for-each (lambda (server)
@@ -911,7 +863,7 @@ argument list and OPTS is the option alist."
                                             (serialize-quota (assoc-ref storage "capacityUsed"))
                                             (serialize-quota (assoc-ref storage "capacity")))
                                     (newline))
-                                  storages)))))
+                                  (array->list storages))))))
                  args))
       ((server-socket)
        (for-each (lambda (server)
@@ -935,8 +887,8 @@ argument list and OPTS is the option alist."
                                                          (serialize-boolean
                                                           (assoc-ref socket "switchedOn"))))
                                                 (newline))
-                                              (assoc-ref service "serviceSockets")))
-                                  services)))))
+                                              (array->list (assoc-ref service "serviceSockets"))))
+                                  (array->list services))))))
                  args))
       ((server-show)
        (for-each (lambda (server)

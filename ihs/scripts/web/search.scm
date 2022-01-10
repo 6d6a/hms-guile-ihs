@@ -1,5 +1,5 @@
 ;;; Guile GMS --- GMS command-line interface.
-;;; Copyright © 2018, 2019 Oleg Pykhalov <go.wigust@gmail.com>
+;;; Copyright © 2018, 2019, 2022 Oleg Pykhalov <go.wigust@gmail.com>
 ;;;
 ;;; This file is part of Guile GMS.
 ;;;
@@ -20,6 +20,7 @@
   #:use-module ((guix scripts) #:select (parse-command-line))
   #:use-module ((guix ui) #:select (G_ leave))
   #:use-module (guix import utils)
+  #:use-module (ihs hms)
   #:use-module (ihs scripts)
   #:use-module (ihs scripts web)
   #:use-module (ihs ui)
@@ -30,10 +31,7 @@
   #:use-module (srfi srfi-11)
   #:use-module (srfi srfi-37)
   #:use-module (web client)
-  #:export (ihs-web-search
-            search-domain
-            search-account
-            search-owner))
+  #:export (ihs-web-search))
 
 (define (show-help)
   (display (G_ "Usage: ihs server [OPTION ...] ACTION [ARG ...] [FILE]
@@ -67,50 +65,14 @@ Fetch data about server.\n"))
 ;;;
 ;;;
 
-(define (search-domain domain)
-  (let-values (((response body)
-                (http-get (string-append "https://api.majordomo.ru/domain\
-/filter?nameContains="
-                                         domain)
-                          #:headers `((content-type
-                                       . (application/json))
-                                      (Authorization
-                                       . ,(format #f "Bearer ~a" (auth))))
-                          #:keep-alive? #t)))
-    (utf8->string body)))
-
 (define (domain->scm domain)
-  (map hash-table->alist (json-string->scm (search-domain domain))))
-
-(define (search-account account)
-  (let-values (((response body)
-                (http-get (string-append "https://api.majordomo.ru/pm\
-/accounts?accountId="
-                                         account)
-                          #:headers `((content-type
-                                       . (application/json))
-                                      (Authorization
-                                       . ,(format #f "Bearer ~a" (auth))))
-                          #:keep-alive? #t)))
-    (utf8->string body)))
+  (json-string->scm (search-domain domain)))
 
 (define (account->scm account)
-  (hash-table->alist (json-string->scm (search-account account))))
-
-(define (search-owner owner)
-  (let-values (((response body)
-                (http-get (string-append "https://api.majordomo.ru/pm\
-/account-owner/search?search="
-                                         owner)
-                          #:headers `((content-type
-                                       . (application/json))
-                                      (Authorization
-                                       . ,(format #f "Bearer ~a" (auth))))
-                          #:keep-alive? #t)))
-    (utf8->string body)))
+  (json-string->scm (search-account account)))
 
 (define (owner->scm owner)
-  (hash-table->alist (json-string->scm (search-owner owner))))
+  (json-string->scm (search-owner owner)))
 
 (define (serialize-owner owner)
   (let ((account (assoc-ref owner "personalAccountId")))
@@ -137,15 +99,17 @@ Fetch data about server.\n"))
                      (for-each (lambda (account)
                                  (serialize-account-number account)
                                  (newline))
-                               (assoc-ref (account->scm (serialize-account arg))
-                                          "content")))
+                               (array->list
+                                (assoc-ref (account->scm (serialize-account arg))
+                                           "content"))))
                     ((string-contains arg "@")
                      (map (lambda (owner)
                             (serialize-owner owner)
                             (newline))
-                          (assoc-ref (owner->scm arg) "content")))
+                          (array->list
+                           (assoc-ref (owner->scm arg) "content"))))
                     (else (for-each (lambda (domain)
                                       (serialize-domain domain)
                                       (newline))
-                                    (domain->scm arg)))))
+                                    (array->list (domain->scm arg))))))
             args))

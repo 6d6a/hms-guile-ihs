@@ -1,8 +1,7 @@
-AC_INIT([Guile-IHS], [0.0.1], [go.wigust@gmail.com], [guile-ihs],
-  [https://www.example.com])
+AC_INIT([Guile-IHS], [1.0.0], [go.wigust@gmail.com], [guile-ihs],
+  [https://majordomo.ru/])
 
-PKG_CHECK_MODULES([GUILE], [guile-2.2])
-GUILE_PKG([2.2])
+GUILE_PKG([3.0])
 GUILE_PROGS
 AC_ARG_WITH([guile-site-dir],
   [AS_HELP_STRING([--with-guile-site-dir],

@@ -1,5 +1,5 @@
 ;;; Guile IHS --- IHS command-line interface.
-;;; Copyright © 2018 Oleg Pykhalov <go.wigust@gmail.com>
+;;; Copyright © 2018, 2022 Oleg Pykhalov <go.wigust@gmail.com>
 ;;;
 ;;; This file is part of Guile IHS.
 ;;;
@@ -21,6 +21,7 @@
   #:use-module ((guix ui) #:select (G_ leave))
   #:use-module (guix build utils)
   #:use-module (guix import utils)
+  #:use-module (ihs hms)
   #:use-module (ihs scripts)
   #:use-module (ihs scripts web)
   #:use-module (ihs ui)
@@ -76,7 +77,7 @@ Panel a browser to configure account.\n"))
                                                    (Authorization . ,(format #f "Bearer ~a" (auth))))
                                        #:body "{}"
                                        #:keep-alive? #t)))
-                (let ((json (hash-table->alist (json-string->scm (utf8->string body)))))
+                (let ((json (array->list (json-string->scm (utf8->string body)))))
                   ;; TODO: Open browser for all accounts in parallel
                   (for-each (match-lambda
                               (("token" records ...)

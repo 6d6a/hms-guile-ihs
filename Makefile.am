@@ -1,5 +1,5 @@
 # Guile IHS --- IHS command-line interface.
-# Copyright © 2018, 2019 Oleg Pykhalov <go.wigust@gmail.com>
+# Copyright © 2018, 2019, 2022 Oleg Pykhalov <go.wigust@gmail.com>
 #
 # This file is part of Guile IHS.
 #
@@ -33,6 +33,8 @@ AM_V_GUILEC_ = $(AM_V_GUILEC_$(AM_DEFAULT_VERBOSITY))
 AM_V_GUILEC_0 = @echo "  GUILEC     " $@;
 
 MODULES =					\
+  ihs/billing2.scm					\
+  ihs/hms.scm					\
   ihs/ui.scm					\
   ihs/scripts.scm				\
   ihs/scripts/web.scm				\

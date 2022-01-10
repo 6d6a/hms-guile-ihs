@@ -1,5 +1,5 @@
 ;;; Guile IHS --- IHS command-line interface.
-;;; Copyright © 2018, 2019 Oleg Pykhalov <go.wigust@gmail.com>
+;;; Copyright © 2018, 2019, 2022 Oleg Pykhalov <go.wigust@gmail.com>
 ;;;
 ;;; This file is part of Guile IHS.
 ;;;
@@ -20,6 +20,7 @@
   #:use-module ((guix scripts) #:select (parse-command-line))
   #:use-module ((guix ui) #:select (G_ leave))
   #:use-module (guix import utils)
+  #:use-module (ihs hms)
   #:use-module (ihs scripts)
   #:use-module (ihs ui)
   #:use-module (json)
@@ -73,7 +74,7 @@ Fetch history about a user.\n"))
     (utf8->string body)))
 
 (define* (history->scm #:key account (page 0))
-  (hash-table->alist (json-string->scm (fetch-history #:account account
+  (array->list (json-string->scm (fetch-history #:account account
                                                       #:page page))))
 
 (define (ihs-web-history . args)

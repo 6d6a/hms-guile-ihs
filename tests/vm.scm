@@ -1,5 +1,5 @@
 ;;; Guile IHS --- IHS command-line interface.
-;;; Copyright © 2018, 2019 Oleg Pykhalov <go.wigust@gmail.com>
+;;; Copyright © 2018, 2019, 2022 Oleg Pykhalov <go.wigust@gmail.com>
 ;;;
 ;;; This file is part of Guile IHS.
 ;;;
@@ -172,7 +172,7 @@
 (test-begin "vm")
 
 (test-assert "ihs-vm"
-  (mock ((ihs scripts vm) fetch-vm
+  (mock ((ihs billing2) fetch-vm
          (lambda (account)
            (match account
              ("vm12345" test-vm-json)
